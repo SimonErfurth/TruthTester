@@ -1,0 +1,20 @@
+{
+
+    "manifest_version": 2,
+    "name": "TruthTester",
+    "version": "0.1",
+
+    "description": "Indicates if a quote has been verified as being true, by a reputable source",
+
+    "icons": {
+        "48": "icons/good-black.svg",
+        "96": "icons/good-black.svg"
+    },
+
+    "content_scripts": [
+        {
+        "matches": ["*://*.serfurth.dk/*"],
+        "js": ["TruthTester.js"]
+    }
+    ]
+}
