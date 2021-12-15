@@ -6,15 +6,26 @@
 
     "description": "Indicates if a quote has been verified as being true, by a reputable source",
 
-    "icons": {
+    "icons": { // https://fonts.google.com/icons?icon.query=good
         "48": "icons/good-black.svg",
         "96": "icons/good-black.svg"
     },
 
-    "content_scripts": [
-        {
-        "matches": ["*://*.serfurth.dk/*"],
-        "js": ["TruthTester.js"]
+    "permissions": [
+        "activeTab"
+    ],
+
+    // Browser button properties 
+    "browser_action": {
+        "default_icon": "icons/good-black-32.png",
+        "default_title": "TruthTester",
+        "default_popup": "popup/test_truth.html"
     }
-    ]
+    
+    // "content_scripts": [
+        //     {
+            //     "matches": ["*://*.serfurth.dk/*"],
+            //     "js": ["TruthTester.js"]
+            // }
+        // ]
 }
