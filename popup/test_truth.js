@@ -1,46 +1,34 @@
 /**
- * CSS to hide everything on the page,
- * except for elements that have the "beastify-image" class.
+ * CSS to insert green boxes around `div.dre-block-quote` elements
  */
-// const truetherPage = "blockquote.dre-block-quote { border: 20px solid green; }";
-const truetherPage = "div.dre-block-quote__body { border: 10px solid green; }";
+const truetherPage = "blockquote.dre-block-quote { border: 10px solid green; }";
 
 /**
- * Listen for clicks on the buttons, and send the appropriate message to
- * the content script in the page.
+ * Listen for clicks on the buttons, and inserts/removes the appropriate CSS code
  */
 function listenForClicks() {
     document.addEventListener("click", (e) => {
 
         /**
-         * Given the name of a beast, get the URL to the corresponding image.
-         */
-        function beastNameToURL(beastName) {
-            switch (beastName) {
-            case "Frog":
-                return browser.runtime.getURL("beasts/frog.jpg");
-            case "Snake":
-                return browser.runtime.getURL("beasts/snake.jpg");
-            case "Turtle":
-                return browser.runtime.getURL("beasts/turtle.jpg");
-            }
-        }
-
-        /**
-         * Insert the page-hiding CSS into the active tab,
-         * then get the beast URL and
-         * send a "beastify" message to the content script in the active tab.
+         * Insert the page-modifying CSS into the active tab
          */
         function truther(tabs) {
-            browser.tabs.insertCSS({code: truetherPage});
+            browser.tabs.insertCSS({code: truetherPage}).then(() => {
+                browser.tabs.sendMessage(tabs[0].id, {
+                    command: "quoteRecolour",
+                });
+            });
         }
 
         /**
-         * Remove the page-hiding CSS from the active tab,
-         * send a "reset" message to the content script in the active tab.
+         * Remove the page-modifying CSS from the active tab
          */
         function reset(tabs) {
-            browser.tabs.removeCSS({code: truetherPage});
+            browser.tabs.removeCSS({code: truetherPage}).then(() => {
+                browser.tabs.sendMessage(tabs[0].id, {
+                    command: "quoteKill",
+                });
+            });
         }
 
         /**
@@ -74,7 +62,7 @@ function listenForClicks() {
 function reportExecuteScriptError(error) {
     document.querySelector("#popup-content").classList.add("hidden");
     document.querySelector("#error-content").classList.remove("hidden");
-    console.error(`Failed to execute beastify content script: ${error.message}`);
+    console.error(`Failed to execute truther content script: ${error.message}`);
 }
 
 /**
