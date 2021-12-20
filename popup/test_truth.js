@@ -1,7 +1,7 @@
 /**
  * CSS to insert green boxes around `div.dre-block-quote` elements
  */
-const truetherPage = "blockquote.dre-block-quote { border: 10px solid green; }";
+const truetherPage = "blockquote { border: 10px solid green; }";
 
 /**
  * Listen for clicks on the buttons, and inserts/removes the appropriate CSS code

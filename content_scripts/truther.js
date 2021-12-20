@@ -10,11 +10,11 @@
     window.hasRun = true;
 
     /**
-     * Go over every blockqoute with the class "dre-block-quote", changing its
-     * style to green, and saving its previous color.
+     * Go over every blockqoute, changing its style to green, and saving its
+     * previous color.
      */
     function recolourTruths() {
-        let existingQuotes = document.querySelectorAll(".dre-block-quote");
+        let existingQuotes = document.querySelectorAll("blockquote");
         for (let quote of existingQuotes) {
             quote.setAttribute("style-old", quote.getAttribute("style"));
             quote.setAttribute("style", "border-color:#00FF00");
@@ -25,9 +25,10 @@
      * Go over every blockqoute with the class "dre-block-quote", and change its style to style-old
      */
     function removeTruths() {
-        let existingQuotes = document.querySelectorAll(".dre-block-quote");
+        let existingQuotes = document.querySelectorAll("blockquote");
         for (let quote of existingQuotes) {
             quote.setAttribute("style", quote.getAttribute("style-old"));
+            quote.removeAttribute("style-old");
         }
     }
 
