@@ -10,10 +10,19 @@ function listenForClicks() {
     document.addEventListener("click", (e) => {
 
         /**
+         * Insert hashes into the page
+         */
+        function attest(tabs) {
+            browser.tabs.sendMessage(tabs[0].id, {
+                command: "verifyQuotes",
+            });
+        }
+
+        /**
          * Insert the page-modifying CSS into the active tab
          */
         function truther(tabs) {
-            browser.tabs.insertCSS({code: truetherPage}).then(() => {
+            browser.tabs.insertCSS({ code: truetherPage }).then(() => {
                 browser.tabs.sendMessage(tabs[0].id, {
                     command: "quoteRecolour",
                 });
@@ -24,7 +33,7 @@ function listenForClicks() {
          * Remove the page-modifying CSS from the active tab
          */
         function reset(tabs) {
-            browser.tabs.removeCSS({code: truetherPage}).then(() => {
+            browser.tabs.removeCSS({ code: truetherPage }).then(() => {
                 browser.tabs.sendMessage(tabs[0].id, {
                     command: "quoteKill",
                 });
@@ -43,13 +52,16 @@ function listenForClicks() {
          * then call "truther()" or "reset()" as appropriate.
          */
         if (e.target.classList.contains("truth")) {
-            browser.tabs.query({active: true, currentWindow: true})
+            browser.tabs.query({ active: true, currentWindow: true })
                 .then(truther)
                 .catch(reportError);
-        }
-        else if (e.target.classList.contains("reset")) {
-            browser.tabs.query({active: true, currentWindow: true})
+        } else if (e.target.classList.contains("reset")) {
+            browser.tabs.query({ active: true, currentWindow: true })
                 .then(reset)
+                .catch(reportError);
+        } else if (e.target.classList.contains("attest")) {
+            browser.tabs.query({ active: true, currentWindow: true })
+                .then(attest)
                 .catch(reportError);
         }
     });
@@ -70,6 +82,6 @@ function reportExecuteScriptError(error) {
  * and add a click handler.
  * If we couldn't inject the script, handle the error.
  */
-browser.tabs.executeScript({file: "/content_scripts/truther.js"})
+browser.tabs.executeScript({ file: "/content_scripts/truther.js" })
     .then(listenForClicks)
     .catch(reportExecuteScriptError);

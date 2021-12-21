@@ -1,5 +1,5 @@
 html, body {
-    width: 100px;
+    width: 150px;
 }
 
 .hidden {
@@ -19,6 +19,14 @@ html, body {
 }
 
 .truth {
+    background-color: #E5F2F2;
+}
+
+.attest:hover {
+    background-color: #CFF2F2;
+}
+
+.attest {
     background-color: #E5F2F2;
 }
 
