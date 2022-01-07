@@ -9,41 +9,51 @@
     }
     window.hasRun = true;
 
+    /*
+     * Calculates and return the hash of the content of a DOM element.
+     */
+    async function hashOfContent(element) {
+        const encoder = new TextEncoder();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(element.textContent));
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+    }
+
+
     /**
      * Testing function that "verifies" all blockquotes by adding an attribute
      * containing the hash of their content to them.
      */
     async function verifyAll() {
-        const encoder = new TextEncoder();
         let existingQuotes = document.querySelectorAll("blockquote");
         for (let quote of existingQuotes) {
-            hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(quote.textContent));
-            hashArray = Array.from(new Uint8Array(hashBuffer));
-            hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            quote.setAttribute("contentHash", hashHex);
+            const hashH = await hashOfContent(quote);
+            quote.setAttribute("contentHash", hashH);
         }
     }
 
-    
+
     /**
      * Go over every blockqoute, changing its style to green, and saving its
      * previous color.
      */
     async function recolourTruths() {
-        const encoder = new TextEncoder();
         let existingQuotes = document.querySelectorAll("blockquote");
         for (let quote of existingQuotes) {
-            quote.setAttribute("style-old", quote.getAttribute("style"));
-            hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(quote.textContent));
-            hashArray = Array.from(new Uint8Array(hashBuffer));
-            hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            contentHash = quote.getAttribute("contentHash");
-            if (hashHex === contentHash) {
-                quote.setAttribute("style", "border-color:#00FF00");
-            } else if (!contentHash) {
-                quote.setAttribute("style", "border-color:#AAAAAA");
-            } else {
-                quote.setAttribute("style", "border-color:#FF0000");
+            if (quote.hasAttribute('contentHash')) {
+                if (!quote.hasAttribute('style-old')) {
+                    quote.setAttribute("style-old", quote.getAttribute("style"));
+                }
+                const hashH = await hashOfContent(quote);
+                const contentHash = quote.getAttribute("contentHash");
+                if (hashH === contentHash) {
+                    quote.setAttribute("style", "border-color:#00FF00");
+                    quote.classList.add("true-quote");
+                } else {
+                    quote.setAttribute("style", "border-color:#FF0000");
+                    quote.classList.add("false-quote");
+                }
             }
         }
     }
@@ -56,6 +66,7 @@
         for (let quote of existingQuotes) {
             quote.setAttribute("style", quote.getAttribute("style-old"));
             quote.removeAttribute("style-old");
+            quote.classList.remove("true-quote", "false-quote");
         }
     }
 
