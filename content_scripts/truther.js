@@ -22,11 +22,11 @@
 
 
     /**
-     * Testing function that "verifies" all blockquotes by adding an attribute
+     * Testing function that "verifies" all elements with class "signedQuote" by adding an attribute
      * containing the hash of their content to them.
      */
     async function verifyAll() {
-        let existingQuotes = document.querySelectorAll("blockquote");
+        let existingQuotes = document.querySelectorAll(".signedQuote");
         for (let quote of existingQuotes) {
             const hashH = await hashOfContent(quote);
             quote.setAttribute("contentHash", hashH);
@@ -35,23 +35,18 @@
 
 
     /**
-     * Go over every blockqoute, changing its style to green, and saving its
-     * previous color.
+     * Go over every element with class "signedQuote", verify if it is
+     * authentic, and change it's colour accordingly.
      */
     async function recolourTruths() {
-        let existingQuotes = document.querySelectorAll("blockquote");
+        let existingQuotes = document.querySelectorAll(".signedQuote");
         for (let quote of existingQuotes) {
             if (quote.hasAttribute('contentHash')) {
-                if (!quote.hasAttribute('style-old')) {
-                    quote.setAttribute("style-old", quote.getAttribute("style"));
-                }
                 const hashH = await hashOfContent(quote);
                 const contentHash = quote.getAttribute("contentHash");
                 if (hashH === contentHash) {
-                    quote.setAttribute("style", "border-color:#00FF00");
                     quote.classList.add("true-quote");
                 } else {
-                    quote.setAttribute("style", "border-color:#FF0000");
                     quote.classList.add("false-quote");
                 }
             }
@@ -59,13 +54,12 @@
     }
 
     /**
-     * Go over every blockqoute with the class "dre-block-quote", and change its style to style-old
+     * Go over every element with class "signedQuote", and remove it's truth
+     * state.
      */
     function removeTruths() {
-        let existingQuotes = document.querySelectorAll("blockquote");
+        let existingQuotes = document.querySelectorAll(".signedQuote");
         for (let quote of existingQuotes) {
-            quote.setAttribute("style", quote.getAttribute("style-old"));
-            quote.removeAttribute("style-old");
             quote.classList.remove("true-quote", "false-quote");
         }
     }
