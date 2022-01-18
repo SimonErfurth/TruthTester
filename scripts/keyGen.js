@@ -5,17 +5,21 @@ const KEY_NAME = argv[2];
 
 (async function() {
     /**
-     * Generates a pair of public and private keys
+     * Generates a public/private key pair
      */
     async function generateEd25519Key() {
-        return webcrypto.subtle.generateKey({
-            name: 'NODE-ED25519',
-            namedCurve: 'NODE-ED25519',
-        }, true, ['sign', 'verify']);
+        return webcrypto.subtle.generateKey(
+            {
+                name: 'NODE-ED25519',
+                namedCurve: 'NODE-ED25519',
+            },
+            true,
+            ['sign', 'verify']
+        );
     }
 
     /**
-     * Converts given key to JWK format, and tries to write it to a file.
+     * Converts `key` to JWK format, and tries to write it to `file`.
      */
     async function writeKeyToFile(key, file) {
         let keyJWK = await webcrypto.subtle.exportKey('jwk', key);
