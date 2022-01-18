@@ -4,7 +4,7 @@ import * as fs from 'fs';
 const argv = process.argv;
 const privateKeyFile = argv[2];
 const documentFile = argv[3];
-
+const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
 
 (async function() {
     /**
@@ -27,10 +27,7 @@ const documentFile = argv[3];
         let privateKey = await webcrypto.subtle.importKey(
             "jwk",
             privateKeyJWK,
-            {
-                name: 'NODE-ED25519',
-                namedCurve: 'NODE-ED25519',
-            },
+            KEY_PARAM,
             true,
             ['sign']
         );
@@ -43,10 +40,7 @@ const documentFile = argv[3];
     async function writeSignatureToFile(key, fileToSign) {
         let toSign = getContent(fileToSign);
         let signature = await webcrypto.subtle.sign(
-            {
-                name: 'NODE-ED25519',
-                namedCurve: 'NODE-ED25519',
-            },
+            KEY_PARAM,
             key,
             toSign
         );
@@ -67,10 +61,7 @@ const documentFile = argv[3];
     // Generate signature for documentFile
     let toSign = getContent(documentFile);
     let signature = await webcrypto.subtle.sign(
-        {
-            name: 'NODE-ED25519',
-            namedCurve: 'NODE-ED25519',
-        },
+        KEY_PARAM,
         privateKey,
         toSign
     );
@@ -81,10 +72,7 @@ const documentFile = argv[3];
     let publicKey = await webcrypto.subtle.importKey(
         "jwk",
         publicKeyJWK,
-        {
-            name: 'NODE-ED25519',
-            namedCurve: 'NODE-ED25519',
-        },
+        KEY_PARAM,
         true,
         ['verify']
     );
@@ -92,10 +80,7 @@ const documentFile = argv[3];
     // And perform verification
     let toVerify = getContent(documentFile);
     let verification = await webcrypto.subtle.verify(
-        {
-            name: 'NODE-ED25519',
-            namedCurve: 'NODE-ED25519',
-        },
+        KEY_PARAM,
         publicKey,
         signature,
         toVerify

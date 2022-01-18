@@ -2,6 +2,8 @@ import { webcrypto } from 'crypto';
 import * as fs from 'fs';
 const argv = process.argv;
 const KEY_NAME = argv[2];
+// const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384" };
+const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
 
 (async function() {
     /**
@@ -9,18 +11,14 @@ const KEY_NAME = argv[2];
      */
     async function generateEd25519Key() {
         return webcrypto.subtle.generateKey(
-            {
-                name: 'NODE-ED25519',
-                namedCurve: 'NODE-ED25519',
-            },
+            KEY_PARAM,
             true,
             ['sign', 'verify']
         );
     }
-
     /**
-     * Converts `key` to JWK format, and tries to write it to `file`.
-     */
+    * Converts `key` to JWK format, and tries to write it to `file`.
+    */
     async function writeKeyToFile(key, file) {
         let keyJWK = await webcrypto.subtle.exportKey('jwk', key);
         let keyString = JSON.stringify(keyJWK, null, " ");
@@ -30,7 +28,6 @@ const KEY_NAME = argv[2];
             }
         });
     }
-
     let keys = await generateEd25519Key();
     writeKeyToFile(keys.privateKey, KEY_NAME + 'PrivateKey');
     writeKeyToFile(keys.publicKey, KEY_NAME + 'PublicKey');
