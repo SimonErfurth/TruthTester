@@ -1,5 +1,4 @@
 import { webcrypto } from 'crypto';
-import { TextEncoder } from 'util';
 import * as fs from 'fs';
 const argv = process.argv;
 const privateKeyFile = argv[2];
@@ -11,7 +10,7 @@ const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
      * Returns the content of `file`
      */
     function getContent(file) {
-        // Using the sync version is bad...
+        // Using the sync version is bad, but it shouldn't matter since the keys are also small...
         let data = fs.readFileSync(file, 'utf8', (err) => {
             if (err) { console.error(err); }
         });
@@ -19,19 +18,19 @@ const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
     }
 
     /**
-     * Retrieves privatekey from `keyfile`. Returns a `CryptoKey` object
+     * Retrieves key from `keyfile`. Returns a `CryptoKey` object
      */
-    async function getPrivateKey(keyfile) {
-        let privateKeyString = getContent(keyfile);
-        let privateKeyJWK = JSON.parse(privateKeyString);
-        let privateKey = await webcrypto.subtle.importKey(
+    async function getKey(keyfile) {
+        let KeyString = getContent(keyfile);
+        let KeyJWK = JSON.parse(KeyString);
+        let key = await webcrypto.subtle.importKey(
             "jwk",
-            privateKeyJWK,
+            KeyJWK,
             KEY_PARAM,
             true,
-            ['sign']
+            KeyJWK.key_ops
         );
-        return privateKey;
+        return key;
     }
 
     /**
@@ -49,7 +48,7 @@ const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
         });
     }
 
-    let privateKey = await getPrivateKey(privateKeyFile);
+    let privateKey = await getKey(privateKeyFile);
 
     writeSignatureToFile(privateKey, documentFile);
 
