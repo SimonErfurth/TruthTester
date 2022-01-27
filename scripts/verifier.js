@@ -1,5 +1,4 @@
 import { webcrypto } from 'crypto';
-import { TextEncoder } from 'util';
 import * as fs from 'fs';
 const argv = process.argv;
 const publicKeyFile = argv[2];
