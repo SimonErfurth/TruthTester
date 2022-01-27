@@ -29,6 +29,6 @@ const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
         });
     }
     let keys = await generateEd25519Key();
-    writeKeyToFile(keys.privateKey, KEY_NAME + 'PrivateKey');
-    writeKeyToFile(keys.publicKey, KEY_NAME + 'PublicKey');
+    writeKeyToFile(keys.privateKey, KEY_NAME + 'PrivateKey.key');
+    writeKeyToFile(keys.publicKey, KEY_NAME + 'PublicKey.key');
 })();
