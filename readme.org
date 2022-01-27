@@ -1,0 +1,8 @@
+* TruthTester
+** Browser Extension
+
+
+** Scripts
+- Keygeneration :: ~node keyGen.js Name~ generates keys for ~Name~.
+- Signing :: ~node signer.js PrivateKeyFile FileToSign~.
+- Verifying :: ~node verifier.js PublicKeyFile SignatureForFile File~.
