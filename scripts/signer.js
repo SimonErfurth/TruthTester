@@ -43,48 +43,48 @@ const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
             key,
             toSign
         );
-        fs.writeFile(fileToSign + '.sig', Buffer.from(signature), err => {
+        let signatureArray = new Uint8Array(signature);
+        let signatureString = signatureArray.toString('base64');
+        fs.writeFile(fileToSign + '.sig', signatureString, err => {
             if (err) { console.log(err); }
         });
     }
 
     let privateKey = await getKey(privateKeyFile);
+    await writeSignatureToFile(privateKey, documentFile);
 
-    writeSignatureToFile(privateKey, documentFile);
-
-    
     /**
      * THE FOLLOWING CODE IS FOR TESTING PURPOSES ONLY
      */
 
     // Generate signature for documentFile
-    let toSign = getContent(documentFile);
-    let signature = await webcrypto.subtle.sign(
-        KEY_PARAM,
-        privateKey,
-        toSign
-    );
+    // let toSign =  getContent(documentFile);
+    // let signature = await webcrypto.subtle.sign(
+    //     KEY_PARAM,
+    //     privateKey,
+    //     toSign
+    // );
 
-    // Load publicKey (for Alice)
-    let publicKeyString = getContent('AlicePublicKey');
-    let publicKeyJWK = JSON.parse(publicKeyString);
-    let publicKey = await webcrypto.subtle.importKey(
-        "jwk",
-        publicKeyJWK,
-        KEY_PARAM,
-        true,
-        ['verify']
-    );
+    // // Load publicKey (for Alice)
+    // let publicKeyString = getContent('AlicePublicKey');
+    // let publicKeyJWK = JSON.parse(publicKeyString);
+    // let publicKey = await webcrypto.subtle.importKey(
+    //     "jwk",
+    //     publicKeyJWK,
+    //     KEY_PARAM,
+    //     true,
+    //     ['verify']
+    // );
 
-    // And perform verification
-    let toVerify = getContent(documentFile);
-    let verification = await webcrypto.subtle.verify(
-        KEY_PARAM,
-        publicKey,
-        signature,
-        toVerify
-    );
+    // // And perform verification
+    // let toVerify = getContent(documentFile);
+    // let verification = await webcrypto.subtle.verify(
+    //     KEY_PARAM,
+    //     publicKey,
+    //     signature,
+    //     toVerify
+    // );
 
-    console.log(verification);
+    // console.log(verification);
 
 })();

@@ -3,8 +3,8 @@ import { TextEncoder } from 'util';
 import * as fs from 'fs';
 const argv = process.argv;
 const publicKeyFile = argv[2];
-const documentFile = argv[3];
-const signatureFile = argv[4];
+const signatureFile = argv[3];
+const documentFile = argv[4];
 const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
 
 (async function() {
@@ -25,7 +25,6 @@ const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
     async function getKey(keyfile) {
         let KeyString = getContent(keyfile);
         let KeyJWK = JSON.parse(KeyString);
-        console.log(KeyJWK.key_ops);
         let privateKey = await webcrypto.subtle.importKey(
             "jwk",
             KeyJWK,
@@ -37,57 +36,24 @@ const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
     }
 
     /**
-     * Write signature of `fileToSign` to file `fileToSign.sig`
+     * Retrieves the signature stored in `file`. Returns an `ArrayBuffer` object
      */
-    async function writeSignatureToFile(key, fileToSign) {
-        let toSign = getContent(fileToSign);
-        let signature = await webcrypto.subtle.sign(
-            KEY_PARAM,
-            key,
-            toSign
-        );
-        fs.writeFile(fileToSign + '.sig', Buffer.from(signature), err => {
-            if (err) { console.log(err); }
-        });
+    async function loadSignature(file){
+        let signatureString = getContent(file);
+        let signatureArray = new Uint8Array(signatureString.toString('base64').split(","));
+        return signatureArray.buffer;
     }
 
-    let privateKey = await getKey(publicKeyFile);
+    let publicKey = await getKey(publicKeyFile);
+    let signature = await loadSignature(signatureFile);
 
-//     writeSignatureToFile(privateKey, documentFile);
-
+    let toVerify = getContent(documentFile);
+    let verification = await webcrypto.subtle.verify(
+        KEY_PARAM,
+        publicKey,
+        signature,
+        toVerify
+    );
+    console.log(verification);
     
-//     /**
-//      * THE FOLLOWING CODE IS FOR TESTING PURPOSES ONLY
-//      */
-
-//     // Generate signature for documentFile
-//     let toSign = getContent(documentFile);
-//     let signature = await webcrypto.subtle.sign(
-//         KEY_PARAM,
-//         privateKey,
-//         toSign
-//     );
-
-//     // Load publicKey (for Alice)
-//     let publicKeyString = getContent('AlicePublicKey');
-//     let publicKeyJWK = JSON.parse(publicKeyString);
-//     let publicKey = await webcrypto.subtle.importKey(
-//         "jwk",
-//         publicKeyJWK,
-//         KEY_PARAM,
-//         true,
-//         ['verify']
-//     );
-
-//     // And perform verification
-//     let toVerify = getContent(documentFile);
-//     let verification = await webcrypto.subtle.verify(
-//         KEY_PARAM,
-//         publicKey,
-//         signature,
-//         toVerify
-//     );
-
-//     console.log(verification);
-
 })();
