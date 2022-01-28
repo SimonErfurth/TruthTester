@@ -1,6 +1,6 @@
 (function() {
     const relativeSignaturePath = "signatures/";
-    const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
+    const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: {name: "SHA-256"}, };
 
     /**
      * Check and set a global guard variable.
@@ -27,7 +27,7 @@
      * Load file from server.
      */
     async function loadFile(filePath) {
-        let response = await fetch(filePath);
+        let response = await fetch(filePath, {cache: "no-cache"});
         if (response.status !== 200) {
             throw response.status;
         }
@@ -41,6 +41,7 @@
         let keyLocation = window.location.href + relativeSignaturePath + quote.getAttribute("keyFile");
         let KeyString = await loadFile(keyLocation);
         let KeyJWK = JSON.parse(KeyString);
+        // console.log(KeyString);
         let publicKey = await crypto.subtle.importKey(
             "jwk",
             KeyJWK,
@@ -48,6 +49,7 @@
             true,
             KeyJWK.key_ops
         );
+        // console.log(publicKey);
         return publicKey;
     }
     
@@ -56,22 +58,31 @@
      * signature, or if the signature doesn't match the quote.
      */
     async function verifyQuote(quote) {
-        // Get the location where the signature should be located, and attempt to load it into signature
+        // Get the location where the signature should be located, attempt to
+        // load it into signature, and convert it to an ArrayBuffer.
         let signatureLocation = window.location.href + relativeSignaturePath + quote.getAttribute("signaturefile") + ".sig";
+        // console.log(signatureLocation);
         let signature = await loadFile(signatureLocation);
-        // signature = signature.trim();
+        // console.log(signature);
         signature = new Uint8Array(signature.toString('base64').split(","));
         signature = signature.buffer;
-        let hashH = await hashOfContent(quote.innerHTML);
+
         let publicKey = await getKey(quote);
+        
+        // Get the hash of the element, and convert it into an ArryBuffer
+        const encoder = new TextEncoder();
+        let hashH = await hashOfContent(quote.innerHTML);
+        hashH = encoder.encode(hashH).buffer;
+        // console.log(hashH);
+        // console.log(encoder.encode(hashH));
+        // console.log(publicKey);
         let verification = await crypto.subtle.verify(
             KEY_PARAM,
             publicKey,
             signature,
             hashH
         );
-        // hashH = hashH.trim();
-        return (signature == hashH);
+        return verification;
     }
 
     /**

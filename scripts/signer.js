@@ -1,9 +1,11 @@
 import { webcrypto } from 'crypto';
+import { TextEncoder } from 'util';
 import * as fs from 'fs';
 const argv = process.argv;
 const privateKeyFile = argv[2];
 const documentFile = argv[3];
-const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
+const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: {name: "SHA-256"}, };
+// const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
 
 (async function() {
     /**
@@ -38,6 +40,9 @@ const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
      */
     async function writeSignatureToFile(key, fileToSign) {
         let toSign = getContent(fileToSign);
+        // Convert to ArrayBuffer
+        const encoder = new TextEncoder();
+        toSign = encoder.encode(toSign);
         let signature = await webcrypto.subtle.sign(
             KEY_PARAM,
             key,

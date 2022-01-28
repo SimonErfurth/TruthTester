@@ -4,7 +4,8 @@ const argv = process.argv;
 const publicKeyFile = argv[2];
 const signatureFile = argv[3];
 const documentFile = argv[4];
-const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
+const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384" };
+// const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
 
 (async function() {
     /**
