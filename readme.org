@@ -1,6 +1,10 @@
 * TruthTester
 ** Browser Extension
+Currently the extension is only tested on Firefox. To try it out go to
+~about:debugging#/runtime/this-firefox~, click ~Load Temporary Add-on...~, and
+then chooses any file in the folder. 
 
+One page which supports this extension is https://serfurth.dk/RealFakeNews/.
 
 ** Scripts
 - Keygeneration :: ~node keyGen.js Name~ generates keys for ~Name~.

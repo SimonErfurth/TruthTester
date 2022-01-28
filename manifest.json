@@ -2,9 +2,9 @@
 
     "manifest_version": 2,
     "name": "TruthTester",
-    "version": "0.1",
+    "version": "0.2",
 
-    "description": "Indicates if a quote has been verified as being true, by a reputable source",
+    "description": "Indicates if a quote has been authenticated as being quoted correctly, by the quoted party",
 
     "icons": { // https://fonts.google.com/icons?icon.query=good
         "48": "icons/good-black.svg",
