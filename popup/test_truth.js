@@ -11,15 +11,6 @@ function listenForClicks() {
     document.addEventListener("click", (e) => {
 
         /**
-         * Insert hashes into the page
-         */
-        function attest(tabs) {
-            browser.tabs.sendMessage(tabs[0].id, {
-                command: "verifyQuotes",
-            });
-        }
-
-        /**
          * Insert the page-modifying CSS into the active tab
          */
         function truther(tabs) {
@@ -45,7 +36,7 @@ function listenForClicks() {
          * Just log the error to the console.
          */
         function reportError(error) {
-            console.error(`Could not test truth: ${error}`);
+            console.error(`Could not test authenticity: ${error}`);
         }
 
         /**
@@ -60,11 +51,7 @@ function listenForClicks() {
             browser.tabs.query({ active: true, currentWindow: true })
                 .then(reset)
                 .catch(reportError);
-        } else if (e.target.classList.contains("attest")) {
-            browser.tabs.query({ active: true, currentWindow: true })
-                .then(attest)
-                .catch(reportError);
-        }
+        } 
     });
 }
 
