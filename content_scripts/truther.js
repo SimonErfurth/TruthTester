@@ -1,5 +1,6 @@
 (function() {
     const relativeSignaturePath = "signatures/";
+    const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
 
     /**
      * Check and set a global guard variable.
@@ -12,11 +13,11 @@
     window.hasRun = true;
 
     /**
-     * Calculates and return the hash of the content of a DOM element.
+     * Calculates and return the hash of the string
      */
     async function hashOfContent(element) {
         const encoder = new TextEncoder();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(element.textContent));
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(element));
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         return hashHex;
@@ -34,16 +35,42 @@
     }
 
     /**
+     * Retrieves key from `keyfile`. Returns a `CryptoKey` object
+     */
+    async function getKey(quote) {
+        let keyLocation = window.location.href + relativeSignaturePath + quote.getAttribute("keyFile");
+        let KeyString = await loadFile(keyLocation);
+        let KeyJWK = JSON.parse(KeyString);
+        let publicKey = await crypto.subtle.importKey(
+            "jwk",
+            KeyJWK,
+            KEY_PARAM,
+            true,
+            KeyJWK.key_ops
+        );
+        return publicKey;
+    }
+    
+    /**
      * Verifies the signature of a quote. Returns false if either there is no
      * signature, or if the signature doesn't match the quote.
      */
     async function verifyQuote(quote) {
         // Get the location where the signature should be located, and attempt to load it into signature
-        let signatueLocation = window.location.href + relativeSignaturePath + quote.getAttribute("signaturefile");
-        let signature = await loadFile(signatueLocation);
-        signature = signature.trim();
-        let hashH = await hashOfContent(quote);
-        hashH = hashH.trim();
+        let signatureLocation = window.location.href + relativeSignaturePath + quote.getAttribute("signaturefile") + ".sig";
+        let signature = await loadFile(signatureLocation);
+        // signature = signature.trim();
+        signature = new Uint8Array(signature.toString('base64').split(","));
+        signature = signature.buffer;
+        let hashH = await hashOfContent(quote.innerHTML);
+        let publicKey = await getKey(quote);
+        let verification = await crypto.subtle.verify(
+            KEY_PARAM,
+            publicKey,
+            signature,
+            hashH
+        );
+        // hashH = hashH.trim();
         return (signature == hashH);
     }
 
@@ -55,7 +82,7 @@
     async function verifyAll() {
         let existingQuotes = document.querySelectorAll(".signedQuote");
         for (let quote of existingQuotes) {
-            const hashH = await hashOfContent(quote);
+            const hashH = await hashOfContent(quote.textContent);
             quote.setAttribute("contentHash", hashH);
         }
     }
