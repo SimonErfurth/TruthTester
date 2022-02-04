@@ -34,6 +34,17 @@
         return await response.text();
     }
 
+    /**
+     * Inject `css` into the headder of the window
+     */
+    function addCss(css) {
+        var head = document.getElementsByTagName('head')[0];
+        var s = document.createElement('style');
+        s.setAttribute('type', 'text/css');
+        s.appendChild(document.createTextNode(css));
+        head.appendChild(s);
+    }
+
 
     /**
      * Modifies the page to include the needed code for the AuthenticModal. 
@@ -41,24 +52,84 @@
      */
     function authenticModalSetup() {
         const modalHTML = `<!-- AuthenticityAuthenticator Modal -->
-  <div id="AuthenticModal" class="modal">
+  <div id="AuthenticModal" class="authenticity-modal">
 
     <!-- Modal content -->
-    <div class="modal-content">
-      <div class="modal-header">
-        <span id="AuthenticClose" class="close">&times;</span>
+    <div class="authenticity-modal-content">
+      <div class="authenticity-modal-header">
+        <span id="AuthenticClose" class="authenticity-close">&times;</span>
         <h2>This quote is authentic</h2>
       </div>
-      <div class="modal-body">
+      <div class="authenticity-modal-body">
         <p>This quote's authenticity has been verified by AuthenticityAuthenticator.</p>
         <p>Details: TBD</p>
       </div>
-      <div class="modal-footer">
+      <div class="authenticity-modal-footer">
         <h3>Learn more about AuthenticityAuthenticator at <a href="https://github.com/SimonErfurth/TruthTester">AuthenticityAuthenticator's website</a>.</h3>
       </div>
     </div>
 
   </div>`;
+        const modalCSS = `/* MODAL */
+/* The Modal (background) */
+.authenticity-modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  /* -webkit-animation-name: fadeIn; /\* Fade in the background *\/ */
+  /* -webkit-animation-duration: 0.4s; */
+  /* animation-name: fadeIn; */
+  /* animation-duration: 0.4s */
+}
+
+/* Modal Content */
+.authenticity-modal-content {
+  position: fixed;
+  bottom: 0;
+  background-color: #fefefe;
+  width: 100%;
+  -webkit-animation-name: slideIn;
+  -webkit-animation-duration: 0.4s;
+  animation-name: slideIn;
+  animation-duration: 0.4s
+}
+
+/* The Close Button */
+.authenticity-close {
+  color: white;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.authenticity-close:hover,
+.authenticity-close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.authenticity-modal-header {
+  padding: 2px 16px;
+  background-color: #5cb85c;
+  color: white;
+}
+
+.authenticity-modal-body {padding: 2px 16px;}
+
+.authenticity-modal-footer {
+  padding: 2px 16px;
+  background-color: #5cb85c;
+  color: white;
+}`;
+        addCss(modalCSS);
         document.body.insertAdjacentHTML("beforeend", modalHTML);
         let modal = document.getElementById("AuthenticModal");
         window.addEventListener('click', function(event) {
