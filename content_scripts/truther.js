@@ -59,17 +59,18 @@
     </div>
 
   </div>`;
-        document.body.innerHTML += modalHTML;
+        document.body.insertAdjacentHTML("beforeend", modalHTML);
         let modal = document.getElementById("AuthenticModal");
-        window.onclick = function(event) {
+        window.addEventListener('click', function(event) {
             if (event.target == modal) {
                 modal.style.display = "none";
             }
-        };
+        });
+
         let close = document.getElementById("AuthenticClose");
-        close.onclick = function() {
+        close.addEventListener('click', function() {
             modal.style.display = "none";
-        };
+        });
         return modal;
     }
 
@@ -80,9 +81,9 @@
     function addModalToggle(element, classString, modal) {
         let wrapper = document.createElement('span');
         wrapper.classList.add(classString);
-        wrapper.onclick = function() {
+        wrapper.addEventListener('click', function() {
             modal.style.display = "block";
-        };
+        });
         element.parentNode.insertBefore(wrapper, element);
         wrapper.appendChild(element);
     }
