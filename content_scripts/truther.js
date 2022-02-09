@@ -1,58 +1,7 @@
 (function() {
     const relativeSignaturePath = "signatures/";
     const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: { name: "SHA-256" }, };
-
-    /**
-     * Check and set a global guard variable.
-     * If this content script is injected into the same page again,
-     * it will do nothing next time.
-     */
-    if (window.hasRun) {
-        return;
-    }
-    window.hasRun = true;
-
-    /**
-     * Calculates and return the hash of `element`
-     */
-    async function hashOfContent(element) {
-        const encoder = new TextEncoder();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(element));
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        return hashHex;
-    }
-
-    /**
-     * Load file from server.
-     */
-    async function loadFile(filePath) {
-        let response = await fetch(filePath, { cache: "no-cache" });
-        if (response.status !== 200) {
-            throw response.status;
-        }
-        return await response.text();
-    }
-
-    /**
-     * Inject `css` into the headder of the window
-     */
-    function addCss(css) {
-        var head = document.getElementsByTagName('head')[0];
-        var s = document.createElement('style');
-        s.setAttribute('type', 'text/css');
-        s.appendChild(document.createTextNode(css));
-        head.appendChild(s);
-    }
-
-
-    /**
-     * Modifies the page to include the needed code for the AuthenticModal. 
-     * Returns the created `modal`.
-     */
-    function authenticModalSetup() {
-        const modalHTML = `<!-- AuthenticityAuthenticator Modal -->
-  <div id="AuthenticModal" class="authenticity-modal">
+    const modalHTML = `<div id="AuthenticModal" class="authenticity-modal">
 
     <!-- Modal content -->
     <div class="authenticity-modal-content">
@@ -70,10 +19,10 @@
     </div>
 
   </div>`;
-        const modalCSS = `/* MODAL */
+    const modalCSS = `/* MODAL */
 /* The Modal (background) */
 .authenticity-modal {
-  display: none; /* Hidden by default */
+  display: block; /* Hidden by default */
   position: fixed; /* Stay in place */
   z-index: 1; /* Sit on top */
   left: 0;
@@ -129,31 +78,91 @@
   background-color: #5cb85c;
   color: white;
 }`;
+
+    /**
+     * Check and set a global guard variable.
+     * If this content script is injected into the same page again,
+     * it will do nothing next time.
+     */
+    if (window.hasRun) {
+        return;
+    }
+    window.hasRun = true;
+
+    /**
+     * Calculates and return the hash of `element`
+     */
+    async function hashOfContent(element) {
+        const encoder = new TextEncoder();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(element));
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+    }
+
+    /**
+     * Load file from server.
+     */
+    async function loadFile(filePath) {
+        let response = await fetch(filePath, { cache: "no-cache" });
+        if (response.status !== 200) {
+            throw response.status;
+        }
+        return await response.text();
+    }
+
+    /**
+     * Inject `css` into the headder of the window
+     */
+    function addCss(css) {
+        var head = document.getElementsByTagName('head')[0];
+        var s = document.createElement('style');
+        s.setAttribute('type', 'text/css');
+        s.setAttribute('id', 'AuthenticModalCSS');
+        s.appendChild(document.createTextNode(css));
+        head.appendChild(s);
+    }
+
+    /**
+     * Removes element with id `idString` from the webpage
+     */
+    function elementRemover(idString) {
+        let element = document.getElementById(idString);
+        element.remove();
+    }
+
+    /**
+     * Modifies the page to include the needed code for the AuthenticModal. 
+     * Returns the created `modal`.
+     */
+    function authenticModalSetup() {
         addCss(modalCSS);
         document.body.insertAdjacentHTML("beforeend", modalHTML);
         let modal = document.getElementById("AuthenticModal");
         window.addEventListener('click', function(event) {
             if (event.target == modal) {
-                modal.style.display = "none";
+                elementRemover('AuthenticModal');
+                elementRemover('AuthenticModalCSS');
             }
         });
 
         let close = document.getElementById("AuthenticClose");
         close.addEventListener('click', function() {
-            modal.style.display = "none";
+            elementRemover('AuthenticModal');
+            elementRemover('AuthenticModalCSS');
         });
-        return modal;
+        // return modal;
     }
 
     /**
-     * Make it so clicking `element` brings up `modal`, by wrapping `element` in
-     * a <span> of class `classString`.
+     * Function st. when clicking a authenticated (respectfully rejected)
+     * element it injects and opens a modality
      */
-    function addModalToggle(element, classString, modal) {
+    function addModalityFunction(element, classString) {
         let wrapper = document.createElement('span');
         wrapper.classList.add(classString);
         wrapper.addEventListener('click', function() {
-            modal.style.display = "block";
+            authenticModalSetup(); // Here we can add as input a function formatModal(element) returning a string with correct info
         });
         element.parentNode.insertBefore(wrapper, element);
         wrapper.appendChild(element);
@@ -215,15 +224,17 @@
      * authentic, and change it's colour accordingly.
      */
     async function recolourQuotes() {
-        let modal = authenticModalSetup();
+        // let modal = authenticModalSetup();
         let existingQuotes = document.querySelectorAll(".signedQuote");
         for (let quote of existingQuotes) {
             if (await verifyQuote(quote)) {
                 quote.classList.add("true-quote");
-                addModalToggle(quote, "modal-btn-verified", modal);
+                addModalityFunction(quote, "modal-btn-verified");
+                // addModalToggle(quote, "modal-btn-verified", modal);
             } else {
                 quote.classList.add("false-quote");
-                addModalToggle(quote, "modal-btn-refused", modal);
+                addModalityFunction(quote, "modal-btn-rejected");
+                // addModalToggle(quote, "modal-btn-refused", modal);
             }
         }
     }
