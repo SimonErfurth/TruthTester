@@ -1,3 +1,5 @@
 *.sig
 /.log/
 *.key
+/scripts/node_modules/
+/scripts/package-lock.json

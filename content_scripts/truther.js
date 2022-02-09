@@ -1,25 +1,96 @@
 (function() {
     const relativeSignaturePath = "signatures/";
     const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: { name: "SHA-256" }, };
-    const modalHTML = `<div id="AuthenticModal" class="authenticity-modal">
+
+    /**
+     * Check and set a global guard variable.
+     * If this content script is injected into the same page again,
+     * it will do nothing next time.
+     */
+    if (window.hasRun) {
+        return;
+    }
+    window.hasRun = true;
+
+    /**
+     * Load file from server.
+     */
+    async function loadFile(filePath) {
+        let response = await fetch(filePath, { cache: "no-cache" });
+        if (response.status !== 200) {
+            throw response.status;
+        }
+        return await response.text();
+    }
+
+    /**
+     * Inject `css` into the headder of the window
+     */
+    function addCss(css) {
+        var head = document.getElementsByTagName('head')[0];
+        var s = document.createElement('style');
+        s.setAttribute('type', 'text/css');
+        s.setAttribute('id', 'AuthenticModalCSS');
+        s.appendChild(document.createTextNode(css));
+        head.appendChild(s);
+    }
+
+    /**
+     * Removes element with id `idString` from the webpage
+     */
+    function elementRemove(idString) {
+        let element = document.getElementById(idString);
+        element.remove();
+    }
+
+    /////////////////////
+    // MODAL FUNCTIONS //
+    /////////////////////
+    /**
+     * Helper functions to format the HTML and CSS with correct info.
+     */
+    // TODO Update signatures to include relevant information, and make this use relevant information.
+    function modalHelperHTML(element, verified) {
+        let keyFileName = element.getAttribute("keyFile");
+        let signer = "Scrooge McDuck";
+        let dateOfSigning = "30/02 2021";
+        let header = "Authenticity verification failed, proceed with caution!";
+        if (verified) {
+            header = "The authenticity of this quote has been verified";
+        }
+        let additionalInformation = "";
+        return `<div id="AuthenticModal" class="authenticity-modal">
 
     <!-- Modal content -->
     <div class="authenticity-modal-content">
       <div class="authenticity-modal-header">
         <span id="AuthenticClose" class="authenticity-close">&times;</span>
-        <h2>This quote is authentic</h2>
+        <h2>${header}</h2>
       </div>
       <div class="authenticity-modal-body">
-        <p>This quote's authenticity has been verified by AuthenticityAuthenticator.</p>
-        <p>Details: TBD</p>
+        <dl>
+          <dt>Signer</dt> <dd>${signer}</dd>
+          <dt>Date of signing</dt> <dd>${dateOfSigning}</dd>
+          <dt>Key file</dt> <dd>${keyFileName}</dd>
+          <dt>Additional Information</dt> <dd>${additionalInformation}</dd>
+        </dl>
+        <h4> The signed quote is: </h4>
+        <p> ${element.innerHTML}</p>
       </div>
       <div class="authenticity-modal-footer">
-        <h3>Learn more about AuthenticityAuthenticator at <a href="https://github.com/SimonErfurth/TruthTester">AuthenticityAuthenticator's website</a>.</h3>
+        <h4>Learn more about AuthenticityAuthenticator and why you should prefer content that has been verified by it at <a href="https://github.com/SimonErfurth/TruthTester">AuthenticityAuthenticator's website</a>.</h4>
       </div>
     </div>
 
   </div>`;
-    const modalCSS = `/* MODAL */
+    }
+
+    function modalHelperCSS(verified) {
+        let modalColour = `#ff2c2c`;
+        if (verified) {
+            modalColour = `#5cb85c`;
+        }
+        return `/* MODAL */
 /* The Modal (background) */
 .authenticity-modal {
   display: block; /* Hidden by default */
@@ -67,7 +138,7 @@
 
 .authenticity-modal-header {
   padding: 2px 16px;
-  background-color: #5cb85c;
+  background-color: ${modalColour};
   color: white;
 }
 
@@ -75,59 +146,16 @@
 
 .authenticity-modal-footer {
   padding: 2px 16px;
-  background-color: #5cb85c;
+  background-color: ${modalColour};
   color: white;
 }`;
-
-    /**
-     * Check and set a global guard variable.
-     * If this content script is injected into the same page again,
-     * it will do nothing next time.
-     */
-    if (window.hasRun) {
-        return;
-    }
-    window.hasRun = true;
-
-    /**
-     * Load file from server.
-     */
-    async function loadFile(filePath) {
-        let response = await fetch(filePath, { cache: "no-cache" });
-        if (response.status !== 200) {
-            throw response.status;
-        }
-        return await response.text();
-    }
-    
-    /**
-     * Inject `css` into the headder of the window
-     */
-    function addCss(css) {
-        var head = document.getElementsByTagName('head')[0];
-        var s = document.createElement('style');
-        s.setAttribute('type', 'text/css');
-        s.setAttribute('id', 'AuthenticModalCSS');
-        s.appendChild(document.createTextNode(css));
-        head.appendChild(s);
     }
 
-    /**
-     * Removes element with id `idString` from the webpage
-     */
-    function elementRemove(idString) {
-        let element = document.getElementById(idString);
-        element.remove();
-    }
-
-    /////////////////////
-    // MODAL FUNCTIONS //
-    /////////////////////
     /**
      * Modifies the page to include the needed code for the AuthenticModal. 
      * Returns the created `modal`.
      */
-    function authenticModalSetup() {
+    function authenticModalSetup(modalCSS, modalHTML) {
         addCss(modalCSS);
         document.body.insertAdjacentHTML("beforeend", modalHTML);
         let modal = document.getElementById("AuthenticModal");
@@ -150,11 +178,11 @@
      * Function st. when clicking a authenticated (respectfully rejected)
      * element it injects and opens a modality
      */
-    function addModalityFunction(element, classString) {
+    function addModalityFunction(element, classString, verified) {
         let wrapper = document.createElement('span');
         wrapper.classList.add(classString);
         wrapper.addEventListener('click', function() {
-            authenticModalSetup(); // Here we can add as input a function formatModal(element) returning a string with correct info
+            authenticModalSetup(modalHelperCSS(verified), modalHelperHTML(element, verified));
         });
         element.parentNode.insertBefore(wrapper, element);
         wrapper.appendChild(element);
@@ -188,7 +216,9 @@
             KEY_PARAM,
             true,
             KeyJWK.key_ops
-        );
+        ).catch((error) => {
+            console.error('Error:', error);
+        });
         // console.log(publicKey);
         return publicKey;
     }
@@ -208,7 +238,7 @@
         signature = signature.buffer;
 
         let publicKey = await getKey(element);
-
+        
         // Get the hash of the element, and convert it into an ArryBuffer
         const encoder = new TextEncoder();
         let hashH = await hashOfContent(element.innerHTML);
@@ -230,18 +260,23 @@
     ////////////////////
     /**
      * Go over every element with class "signedQuote", verify if it is
-     * authentic, and change it's colour accordingly.
+     * authentic, and treat it accordingly.
      */
     async function verifySignedElements() {
         // let modal = authenticModalSetup();
         let existingQuotes = document.querySelectorAll(".signedQuote");
         for (let quote of existingQuotes) {
-            if (await verifySignature(quote)) {
+            // console.log(quote)
+            let verify = await verifySignature(quote).catch((error) => {
+                console.error('Error:', error);
+                return false;
+            });
+            if (verify) {
                 quote.classList.add("verified-quote");
-                addModalityFunction(quote, "modal-btn-verified");
+                addModalityFunction(quote, "modal-btn-verified", true);
             } else {
                 quote.classList.add("rejected-quote");
-                addModalityFunction(quote, "modal-btn-rejected");
+                addModalityFunction(quote, "modal-btn-rejected", false);
             }
         }
     }
