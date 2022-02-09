@@ -1,7 +1,7 @@
 /**
  * CSS to insert green boxes around `div.dre-block-quote` elements
  */
-const truetherPage = `.true-quote { background-color: lightgreen; }      
+const truetherPage = `.verified-quote { background-color: lightgreen; }      
 .false-quote { background-color: red; }`;
 
 /**
@@ -13,10 +13,10 @@ function listenForClicks() {
         /**
          * Insert the page-modifying CSS into the active tab
          */
-        function truther(tabs) {
+        function verifier(tabs) {
             browser.tabs.insertCSS({ code: truetherPage }).then(() => {
                 browser.tabs.sendMessage(tabs[0].id, {
-                    command: "quoteRecolour",
+                    command: "verifyElements",
                 });
             });
         }
@@ -27,7 +27,7 @@ function listenForClicks() {
         function reset(tabs) {
             browser.tabs.removeCSS({ code: truetherPage }).then(() => {
                 browser.tabs.sendMessage(tabs[0].id, {
-                    command: "quoteKill",
+                    command: "resetAll",
                 });
             });
         }
@@ -41,11 +41,11 @@ function listenForClicks() {
 
         /**
          * Get the active tab,
-         * then call "truther()" or "reset()" as appropriate.
+         * then call "verifier()" or "reset()" as appropriate.
          */
-        if (e.target.classList.contains("truth")) {
+        if (e.target.classList.contains("authentify")) {
             browser.tabs.query({ active: true, currentWindow: true })
-                .then(truther)
+                .then(verifier)
                 .catch(reportError);
         } else if (e.target.classList.contains("reset")) {
             browser.tabs.query({ active: true, currentWindow: true })

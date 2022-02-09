@@ -14,11 +14,11 @@ html, body {
     cursor: pointer;
 }
 
-.truth:hover {
+.authentify:hover {
     background-color: #CFF2F2;
 }
 
-.truth {
+.authentify {
     background-color: #E5F2F2;
 }
 

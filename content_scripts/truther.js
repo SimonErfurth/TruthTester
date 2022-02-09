@@ -90,17 +90,6 @@
     window.hasRun = true;
 
     /**
-     * Calculates and return the hash of `element`
-     */
-    async function hashOfContent(element) {
-        const encoder = new TextEncoder();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(element));
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        return hashHex;
-    }
-
-    /**
      * Load file from server.
      */
     async function loadFile(filePath) {
@@ -110,7 +99,7 @@
         }
         return await response.text();
     }
-
+    
     /**
      * Inject `css` into the headder of the window
      */
@@ -126,11 +115,14 @@
     /**
      * Removes element with id `idString` from the webpage
      */
-    function elementRemover(idString) {
+    function elementRemove(idString) {
         let element = document.getElementById(idString);
         element.remove();
     }
 
+    /////////////////////
+    // MODAL FUNCTIONS //
+    /////////////////////
     /**
      * Modifies the page to include the needed code for the AuthenticModal. 
      * Returns the created `modal`.
@@ -141,15 +133,15 @@
         let modal = document.getElementById("AuthenticModal");
         window.addEventListener('click', function(event) {
             if (event.target == modal) {
-                elementRemover('AuthenticModal');
-                elementRemover('AuthenticModalCSS');
+                elementRemove('AuthenticModal');
+                elementRemove('AuthenticModalCSS');
             }
         });
 
         let close = document.getElementById("AuthenticClose");
         close.addEventListener('click', function() {
-            elementRemover('AuthenticModal');
-            elementRemover('AuthenticModalCSS');
+            elementRemove('AuthenticModal');
+            elementRemove('AuthenticModalCSS');
         });
         // return modal;
     }
@@ -168,11 +160,25 @@
         wrapper.appendChild(element);
     }
 
+    ///////////////////////////////////////
+    // FUNCTIONS RELATED TO CRYPTOGRAPHY //
+    ///////////////////////////////////////
     /**
-     * Retrieves key from `quote.keyFile`. Returns a `CryptoKey` object
+     * Calculates and return the hash of `element`
      */
-    async function getKey(quote) {
-        let keyLocation = window.location.href + relativeSignaturePath + quote.getAttribute("keyFile");
+    async function hashOfContent(element) {
+        const encoder = new TextEncoder();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(element));
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+    }
+
+    /**
+     * Retrieves key from keyFile attribute of `element`. Returns a `CryptoKey` object
+     */
+    async function getKey(element) {
+        let keyLocation = window.location.href + relativeSignaturePath + element.getAttribute("keyFile");
         let KeyString = await loadFile(keyLocation);
         let KeyJWK = JSON.parse(KeyString);
         // console.log(KeyString);
@@ -188,24 +194,24 @@
     }
 
     /**
-     * Verifies the signature of a quote. Returns false if either there is no
-     * signature, or if the signature doesn't match the quote.
+     * Verifies the signature of an element. Returns false if either there is no
+     * signature, or if the signature doesn't match the element.
      */
-    async function verifyQuote(quote) {
+    async function verifySignature(element) {
         // Get the location where the signature should be located, attempt to
         // load it into signature, and convert it to an ArrayBuffer.
-        let signatureLocation = window.location.href + relativeSignaturePath + quote.getAttribute("signaturefile") + ".sig";
+        let signatureLocation = window.location.href + relativeSignaturePath + element.getAttribute("signaturefile") + ".sig";
         // console.log(signatureLocation);
         let signature = await loadFile(signatureLocation);
         // console.log(signature);
         signature = new Uint8Array(signature.toString('base64').split(","));
         signature = signature.buffer;
 
-        let publicKey = await getKey(quote);
+        let publicKey = await getKey(element);
 
         // Get the hash of the element, and convert it into an ArryBuffer
         const encoder = new TextEncoder();
-        let hashH = await hashOfContent(quote.innerHTML);
+        let hashH = await hashOfContent(element.innerHTML);
         hashH = encoder.encode(hashH).buffer;
         // console.log(hashH);
         // console.log(encoder.encode(hashH));
@@ -219,22 +225,23 @@
         return verification;
     }
 
+    ////////////////////
+    // MAIN FUNCTIONS //
+    ////////////////////
     /**
      * Go over every element with class "signedQuote", verify if it is
      * authentic, and change it's colour accordingly.
      */
-    async function recolourQuotes() {
+    async function verifySignedElements() {
         // let modal = authenticModalSetup();
         let existingQuotes = document.querySelectorAll(".signedQuote");
         for (let quote of existingQuotes) {
-            if (await verifyQuote(quote)) {
-                quote.classList.add("true-quote");
+            if (await verifySignature(quote)) {
+                quote.classList.add("verified-quote");
                 addModalityFunction(quote, "modal-btn-verified");
-                // addModalToggle(quote, "modal-btn-verified", modal);
             } else {
-                quote.classList.add("false-quote");
+                quote.classList.add("rejected-quote");
                 addModalityFunction(quote, "modal-btn-rejected");
-                // addModalToggle(quote, "modal-btn-refused", modal);
             }
         }
     }
@@ -242,10 +249,10 @@
     /**
      * Go over every element with class "signedQuote", and remove it's truth class.
      */
-    function removeColorings() {
+    function removeVerifications() {
         let existingQuotes = document.querySelectorAll(".signedQuote");
         for (let quote of existingQuotes) {
-            quote.classList.remove("true-quote", "false-quote");
+            quote.classList.remove("verified-quote", "rejected-quote");
         }
     }
 
@@ -254,10 +261,10 @@
      * Call corresponding function
      */
     browser.runtime.onMessage.addListener((message) => {
-        if (message.command === "quoteKill") {
-            removeColorings();
-        } else if (message.command === "quoteRecolour") {
-            recolourQuotes();
+        if (message.command === "resetAll") {
+            removeVerifications();
+        } else if (message.command === "verifyElements") {
+            verifySignedElements();
         }
     });
 
