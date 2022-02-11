@@ -209,7 +209,6 @@
         let keyLocation = window.location.href + relativeSignaturePath + element.getAttribute("keyFile");
         let KeyString = await loadFile(keyLocation);
         let KeyJWK = JSON.parse(KeyString);
-        // console.log(KeyString);
         let publicKey = await crypto.subtle.importKey(
             "jwk",
             KeyJWK,
@@ -219,7 +218,6 @@
         ).catch((error) => {
             console.error('Error:', error);
         });
-        // console.log(publicKey);
         return publicKey;
     }
 
@@ -231,9 +229,7 @@
         // Get the location where the signature should be located, attempt to
         // load it into signature, and convert it to an ArrayBuffer.
         let signatureLocation = window.location.href + relativeSignaturePath + element.getAttribute("signaturefile") + ".sig";
-        // console.log(signatureLocation);
         let signature = await loadFile(signatureLocation);
-        // console.log(signature);
         signature = new Uint8Array(signature.toString('base64').split(","));
         signature = signature.buffer;
 
@@ -243,9 +239,6 @@
         const encoder = new TextEncoder();
         let hashH = await hashOfContent(element.innerHTML);
         hashH = encoder.encode(hashH).buffer;
-        // console.log(hashH);
-        // console.log(encoder.encode(hashH));
-        // console.log(publicKey);
         let verification = await crypto.subtle.verify(
             KEY_PARAM,
             publicKey,
@@ -266,9 +259,8 @@
         // let modal = authenticModalSetup();
         let existingQuotes = document.querySelectorAll(".signedQuote");
         for (let quote of existingQuotes) {
-            // console.log(quote)
             let verify = await verifySignature(quote).catch((error) => {
-                console.error('Error:', error);
+                console.warn('Problem verifying signature!\nError:', error);
                 return false;
             });
             if (verify) {
