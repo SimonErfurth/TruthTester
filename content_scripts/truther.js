@@ -277,7 +277,7 @@
     // MAIN FUNCTIONS //
     ////////////////////
     /**
-     * Go over every element with class "signedQuote", verify if it is
+     * Go over every element with class "className", verify if it is
      * authentic, and treat it accordingly.
      */
     async function verifySignedElements(className) {
@@ -299,10 +299,10 @@
     }
 
     /**
-     * Go over every element with class "signedQuote", and remove it's truth class.
+     * Go over every element with class "className", and remove it's truth class.
      */
-    function removeVerifications() {
-        let existingQuotes = document.querySelectorAll(".signedQuote");
+    function removeVerifications(className) {
+        let existingQuotes = document.querySelectorAll(className);
         for (let quote of existingQuotes) {
             quote.classList.remove("verified-quote", "rejected-quote");
         }
@@ -323,7 +323,8 @@
      */
     browser.runtime.onMessage.addListener((message) => {
         if (message.command === "resetAll") {
-            removeVerifications();
+            removeVerifications(".signedQuote");
+            removeVerifications(".signedText");
         } else if (message.command === "verifyElements") {
             verifySignedElements(".signedQuote");
         } else if (message.command === "verifyText") {
