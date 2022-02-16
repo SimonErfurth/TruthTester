@@ -248,6 +248,31 @@
         return verification;
     }
 
+    ////////////////////////
+    // FUNCTIONS FOR TEXT //
+    ////////////////////////
+
+    /**
+     * Go over `text`, return positions of matching `startString` and `endString`
+     */
+    function findSignedText(text, startString, endString) {
+        // let line = 1;
+        // let char = 1;
+        // let stack = [];
+        // for (let i = 0; i < text.length - endString.length; i ++) {
+        //     if (text.slice(i,i+startString.length) == startString) {
+        //         console.log("Found a startstring!");
+        //         stack.push(i);
+        //     }
+        //     if (text.slice(i,i+endString.length) == endString && stack != []) {
+        //         console.log("Found a quote, starting at char ", stack.pop(), " and ending at char ",i + endString.length);
+        //     }
+        // }
+        text = text.replace(startString,'<span class="signedText">');
+        text = text.replace(endString,"</span>");
+        return text;
+    }
+
     ////////////////////
     // MAIN FUNCTIONS //
     ////////////////////
@@ -255,9 +280,9 @@
      * Go over every element with class "signedQuote", verify if it is
      * authentic, and treat it accordingly.
      */
-    async function verifySignedElements() {
+    async function verifySignedElements(className) {
         // let modal = authenticModalSetup();
-        let existingQuotes = document.querySelectorAll(".signedQuote");
+        let existingQuotes = document.querySelectorAll(className);
         for (let quote of existingQuotes) {
             let verify = await verifySignature(quote).catch((error) => {
                 console.warn('Problem verifying signature!\nError:', error);
@@ -284,6 +309,15 @@
     }
 
     /**
+     * Go over the webpage, looking for text with an included signature
+     * reference, if any is found verify it accordingly.
+     */
+    async function verifySignedText() {
+        let text = findSignedText(document.body.innerHTML,/START_Q/g,/END_Q/g);
+        document.body.innerHTML = text;
+    }
+
+    /**
      * Listen for messages from the background script.
      * Call corresponding function
      */
@@ -291,7 +325,10 @@
         if (message.command === "resetAll") {
             removeVerifications();
         } else if (message.command === "verifyElements") {
-            verifySignedElements();
+            verifySignedElements(".signedQuote");
+        } else if (message.command === "verifyText") {
+            verifySignedText();
+            verifySignedElements(".signedText");
         }
     });
 

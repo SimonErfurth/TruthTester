@@ -32,6 +32,14 @@ function listenForClicks() {
             });
         }
 
+        function verifierText(tabs) {
+            browser.tabs.insertCSS({ code: truetherPage }).then(() => {
+                browser.tabs.sendMessage(tabs[0].id, {
+                    command: "verifyText",
+                });
+            });
+        }
+
         /**
          * Just log the error to the console.
          */
@@ -43,15 +51,19 @@ function listenForClicks() {
          * Get the active tab,
          * then call "verifier()" or "reset()" as appropriate.
          */
-        if (e.target.classList.contains("authentify")) {
+        if (e.target.id == "authentify-html") {
             browser.tabs.query({ active: true, currentWindow: true })
                 .then(verifier)
+                .catch(reportError);
+        } else if (e.target.id == "authentify-text") {
+            browser.tabs.query({ active: true, currentWindow: true})
+                .then(verifierText)
                 .catch(reportError);
         } else if (e.target.classList.contains("reset")) {
             browser.tabs.query({ active: true, currentWindow: true })
                 .then(reset)
                 .catch(reportError);
-        } 
+        }
     });
 }
 
