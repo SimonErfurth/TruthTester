@@ -1,6 +1,8 @@
 (function() {
     const relativeSignaturePath = "signatures/";
     const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: { name: "SHA-256" }, };
+    const TEXT_ID_OFFSET = 1;  // Offset between end of string indicating end of a quote and start of the ID string
+    const TEXT_ID_LENGTH = 6; 
 
     /**
      * Check and set a global guard variable.
@@ -225,10 +227,11 @@
      * Verifies the signature of an element. Returns false if either there is no
      * signature, or if the signature doesn't match the element.
      */
-    async function verifySignature(element) {
+    async function verifySignature(element,signatureLocationPrefix) {
         // Get the location where the signature should be located, attempt to
         // load it into signature, and convert it to an ArrayBuffer.
-        let signatureLocation = window.location.href + relativeSignaturePath + element.getAttribute("signaturefile") + ".sig";
+        let signatureLocation = signatureLocationPrefix + element.getAttribute("signaturefile") + ".sig";
+        console.log("signatureLocation = ", signatureLocation);
         let signature = await loadFile(signatureLocation);
         signature = new Uint8Array(signature.toString('base64').split(","));
         signature = signature.buffer;
@@ -268,8 +271,11 @@
         //         console.log("Found a quote, starting at char ", stack.pop(), " and ending at char ",i + endString.length);
         //     }
         // }
-        text = text.replace(startString,'<span class="signedText">');
-        text = text.replace(endString,"</span>");
+        let startID = text.indexOf(endString) + endString.length + TEXT_ID_OFFSET;
+        let textID = text.slice(startID,startID + TEXT_ID_LENGTH);
+        let startTag = `<span class="signedText", signatureFile="${textID}", keyFile="DonaldPublicKey.key">`;
+        text = text.replace(new RegExp(startString, 'g'),startTag);
+        text = text.replace(new RegExp(endString + ":" + textID + ":", 'g'),"</span>");
         return text;
     }
 
@@ -280,11 +286,11 @@
      * Go over every element with class "className", verify if it is
      * authentic, and treat it accordingly.
      */
-    async function verifySignedElements(className) {
+    async function verifySignedElements(className, signatureLocationPrefix) {
         // let modal = authenticModalSetup();
         let existingQuotes = document.querySelectorAll(className);
         for (let quote of existingQuotes) {
-            let verify = await verifySignature(quote).catch((error) => {
+            let verify = await verifySignature(quote, signatureLocationPrefix).catch((error) => {
                 console.warn('Problem verifying signature!\nError:', error);
                 return false;
             });
@@ -313,7 +319,7 @@
      * reference, if any is found verify it accordingly.
      */
     async function verifySignedText() {
-        let text = findSignedText(document.body.innerHTML,/START_Q/g,/END_Q/g);
+        let text = findSignedText(document.body.innerHTML,"START_Q","END_Q");
         document.body.innerHTML = text;
     }
 
@@ -326,10 +332,10 @@
             removeVerifications(".signedQuote");
             removeVerifications(".signedText");
         } else if (message.command === "verifyElements") {
-            verifySignedElements(".signedQuote");
+            verifySignedElements(".signedQuote", window.location.href + relativeSignaturePath);
         } else if (message.command === "verifyText") {
             verifySignedText();
-            verifySignedElements(".signedText");
+            verifySignedElements(".signedText", "https://serfurth.dk/RealFakeNews/sigs/");
         }
     });
 

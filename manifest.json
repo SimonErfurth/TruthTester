@@ -12,6 +12,7 @@
     },
 
     "permissions": [
+        "*://serfurth.dk/",
         "activeTab"
     ],
 
