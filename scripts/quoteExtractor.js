@@ -36,7 +36,7 @@ const tagToSign = argv[3];
     for (let quote of quotes) {
         // Here there is a decision to be made, for now we go with innerHtml
         let hashOfQuote = await hashOfContent(quote.innerHTML);
-        fs.writeFile(hashOfQuote, hashOfQuote, err => {
+        fs.writeFile(hashOfQuote, quote.innerHTML, err => {
             if (err) { console.log(err); }
         });
     }

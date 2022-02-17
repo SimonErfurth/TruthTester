@@ -8,6 +8,6 @@ One page which supports this extension is https://serfurth.dk/RealFakeNews/.
 
 ** Scripts
 - Keygeneration :: ~node keyGen.js Name~ generates keys for ~Name~.
-- Signing :: ~node signer.js PrivateKeyFile FileToSign~.
-- Verifying :: ~node verifier.js PublicKeyFile SignatureForFile File~.
+- Signing :: ~node signer.js PrivateKeyFile PublicKeyFile FileToSign identity comment~.
+- Verifying :: ~node verifier.js SignatureForFile File~.
 - Exracting Quotes :: ~node qouteExtractor.js HTMLFile classOfElementstoSign~.

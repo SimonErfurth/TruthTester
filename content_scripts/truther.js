@@ -1,6 +1,5 @@
 (function() {
     const relativeSignaturePath = "signatures/";
-    const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: { name: "SHA-256" }, };
     const TEXT_ID_OFFSET = 1;  // Offset between end of string indicating end of a quote and start of the ID string
     const TEXT_ID_LENGTH = 6; 
 
@@ -207,10 +206,8 @@
     /**
      * Retrieves key from keyFile attribute of `element`. Returns a `CryptoKey` object
      */
-    async function getKey(element) {
-        let keyLocation = window.location.href + relativeSignaturePath + element.getAttribute("keyFile");
-        let KeyString = await loadFile(keyLocation);
-        let KeyJWK = JSON.parse(KeyString);
+    async function loadKey(keyString,KEY_PARAM) {
+        let KeyJWK = JSON.parse(keyString);
         let publicKey = await crypto.subtle.importKey(
             "jwk",
             KeyJWK,
@@ -231,19 +228,19 @@
         // Get the location where the signature should be located, attempt to
         // load it into signature, and convert it to an ArrayBuffer.
         let signatureLocation = signatureLocationPrefix + element.getAttribute("signaturefile") + ".sig";
-        console.log("signatureLocation = ", signatureLocation);
-        let signature = await loadFile(signatureLocation);
+        let signatureFull = JSON.parse(await loadFile(signatureLocation));
+        let signature = signatureFull.signature;
         signature = new Uint8Array(signature.toString('base64').split(","));
         signature = signature.buffer;
 
-        let publicKey = await getKey(element);
+        let publicKey = await loadKey(signatureFull.publicKey, signatureFull.KEY_PARAM);
         
         // Get the hash of the element, and convert it into an ArryBuffer
         const encoder = new TextEncoder();
         let hashH = await hashOfContent(element.innerHTML);
         hashH = encoder.encode(hashH).buffer;
         let verification = await crypto.subtle.verify(
-            KEY_PARAM,
+            signatureFull.KEY_PARAM,
             publicKey,
             signature,
             hashH

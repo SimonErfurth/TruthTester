@@ -1,11 +1,8 @@
 import { webcrypto } from 'crypto';
 import * as fs from 'fs';
 const argv = process.argv;
-const publicKeyFile = argv[2];
-const signatureFile = argv[3];
-const documentFile = argv[4];
-const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384" };
-// const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
+const signatureFile = argv[2];
+const documentFile = argv[3];
 
 (async function() {
     /**
@@ -20,10 +17,20 @@ const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384" };
     }
 
     /**
+     * Calculates and return the hash of the string.
+     */
+    async function hashOfContent(element) {
+        const encoder = new TextEncoder();
+        const hashBuffer = await webcrypto.subtle.digest('SHA-256', encoder.encode(element));
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return hashHex;
+    }
+
+    /**
      * Retrieves key from `keyfile`. Returns a `CryptoKey` object
      */
-    async function getKey(keyfile) {
-        let KeyString = getContent(keyfile);
+    async function getKey(KeyString) {
         let KeyJWK = JSON.parse(KeyString);
         let privateKey = await webcrypto.subtle.importKey(
             "jwk",
@@ -38,16 +45,18 @@ const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384" };
     /**
      * Retrieves the signature stored in `file`. Returns an `ArrayBuffer` object
      */
-    async function loadSignature(file){
-        let signatureString = getContent(file);
+    async function loadSignature(signatureString){
         let signatureArray = new Uint8Array(signatureString.toString('base64').split(","));
         return signatureArray.buffer;
     }
 
-    let publicKey = await getKey(publicKeyFile);
-    let signature = await loadSignature(signatureFile);
+    // let publicKey = await getKey(publicKeyFile);
+    let signatureFull = JSON.parse(getContent(signatureFile));
+    let KEY_PARAM = signatureFull.KEY_PARAM;
+    let signature = await loadSignature(signatureFull.signature);
+    let publicKey = await getKey(signatureFull.publicKey);
 
-    let toVerify = getContent(documentFile);
+    let toVerify = await hashOfContent(getContent(documentFile));
     let verification = await webcrypto.subtle.verify(
         KEY_PARAM,
         publicKey,
