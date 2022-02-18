@@ -75,6 +75,7 @@ const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: { name: "SHA-256" 
         fs.writeFile(fileToSign + '.sig', JSON.stringify(signatureFull, null), err => {
             if (err) { console.log(err); }
         });
+        console.log("signatureFull = ", signatureFull);
     }
 
     let privateKey = await getKey(privateKeyFile);

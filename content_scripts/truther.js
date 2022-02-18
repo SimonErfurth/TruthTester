@@ -51,15 +51,16 @@
      * Helper functions to format the HTML and CSS with correct info.
      */
     // TODO Update signatures to include relevant information, and make this use relevant information.
-    function modalHelperHTML(element, verified) {
-        let keyFileName = element.getAttribute("keyFile");
-        let signer = "Scrooge McDuck";
+    function modalHelperHTML(element, verified, signature) {
+        let algoParams = signature.KEY_PARAM.name;
+        let signer = signature.identity;
         let dateOfSigning = "30/02 2021";
         let header = "Authenticity verification failed, proceed with caution!";
         if (verified) {
             header = "The authenticity of this quote has been verified";
         }
-        let additionalInformation = "";
+        let additionalInformation = signature.comment;
+        console.log("element.textContent = ", element.textContent);
         return `<div id="AuthenticModal" class="authenticity-modal">
 
     <!-- Modal content -->
@@ -70,13 +71,15 @@
       </div>
       <div class="authenticity-modal-body">
         <dl>
-          <dt>Signer</dt> <dd>${signer}</dd>
-          <dt>Date of signing</dt> <dd>${dateOfSigning}</dd>
-          <dt>Key file</dt> <dd>${keyFileName}</dd>
-          <dt>Additional Information</dt> <dd>${additionalInformation}</dd>
+          <dt><b>Signer</b></dt> <dd>${signer}</dd>
+          <dt><b>Date of signing</b></dt> <dd>${dateOfSigning}</dd>
+          <dt><b>Additional Information</b></dt> <dd>${additionalInformation}</dd>
+          <dt><b>Signature Algorithm</b></dt> <dd>${algoParams}</dd>
         </dl>
         <h4> The signed quote is: </h4>
-        <p> ${element.innerHTML}</p>
+        <div style="padding: 5px; border: 2px solid black;"><p>
+           ${element.textContent}
+        </p></div>
       </div>
       <div class="authenticity-modal-footer">
         <h4>Learn more about AuthenticityAuthenticator and why you should prefer content that has been verified by it at <a href="https://github.com/SimonErfurth/TruthTester">AuthenticityAuthenticator's website</a>.</h4>
@@ -179,11 +182,11 @@
      * Function st. when clicking a authenticated (respectfully rejected)
      * element it injects and opens a modality
      */
-    function addModalityFunction(element, classString, verified) {
+    function addModalityFunction(element, classString, verified, signature) {
         let wrapper = document.createElement('span');
         wrapper.classList.add(classString);
         wrapper.addEventListener('click', function() {
-            authenticModalSetup(modalHelperCSS(verified), modalHelperHTML(element, verified));
+            authenticModalSetup(modalHelperCSS(verified), modalHelperHTML(element, verified, signature));
         });
         element.parentNode.insertBefore(wrapper, element);
         wrapper.appendChild(element);
@@ -206,7 +209,7 @@
     /**
      * Retrieves key from keyFile attribute of `element`. Returns a `CryptoKey` object
      */
-    async function loadKey(keyString,KEY_PARAM) {
+    async function loadKey(keyString, KEY_PARAM) {
         let KeyJWK = JSON.parse(keyString);
         let publicKey = await crypto.subtle.importKey(
             "jwk",
@@ -224,17 +227,13 @@
      * Verifies the signature of an element. Returns false if either there is no
      * signature, or if the signature doesn't match the element.
      */
-    async function verifySignature(element,signatureLocationPrefix) {
-        // Get the location where the signature should be located, attempt to
-        // load it into signature, and convert it to an ArrayBuffer.
-        let signatureLocation = signatureLocationPrefix + element.getAttribute("signaturefile") + ".sig";
-        let signatureFull = JSON.parse(await loadFile(signatureLocation));
+    async function verifySignature(element, signatureFull) {
         let signature = signatureFull.signature;
         signature = new Uint8Array(signature.toString('base64').split(","));
         signature = signature.buffer;
 
         let publicKey = await loadKey(signatureFull.publicKey, signatureFull.KEY_PARAM);
-        
+
         // Get the hash of the element, and convert it into an ArryBuffer
         const encoder = new TextEncoder();
         let hashH = await hashOfContent(element.innerHTML);
@@ -255,7 +254,7 @@
     /**
      * Go over `text`, return positions of matching `startString` and `endString`
      */
-    function findSignedText(text, startString, endString) {
+    function verifySignedTextHelper(text, startString, endString) {
         // let line = 1;
         // let char = 1;
         // let stack = [];
@@ -269,10 +268,10 @@
         //     }
         // }
         let startID = text.indexOf(endString) + endString.length + TEXT_ID_OFFSET;
-        let textID = text.slice(startID,startID + TEXT_ID_LENGTH);
-        let startTag = `<span class="signedText", signatureFile="${textID}", keyFile="DonaldPublicKey.key">`;
-        text = text.replace(new RegExp(startString, 'g'),startTag);
-        text = text.replace(new RegExp(endString + ":" + textID + ":", 'g'),"</span>");
+        let textID = text.slice(startID, startID + TEXT_ID_LENGTH);
+        let startTag = `<span class="signedText", signatureFile="${textID}">`;
+        text = text.replace(new RegExp(startString, 'g'), startTag);
+        text = text.replace(new RegExp(endString + ":" + textID + ":", 'g'), "</span>");
         return text;
     }
 
@@ -287,16 +286,25 @@
         // let modal = authenticModalSetup();
         let existingQuotes = document.querySelectorAll(className);
         for (let quote of existingQuotes) {
-            let verify = await verifySignature(quote, signatureLocationPrefix).catch((error) => {
-                console.warn('Problem verifying signature!\nError:', error);
-                return false;
-            });
-            if (verify) {
-                quote.classList.add("verified-quote");
-                addModalityFunction(quote, "modal-btn-verified", true);
-            } else {
-                quote.classList.add("rejected-quote");
-                addModalityFunction(quote, "modal-btn-rejected", false);
+            try {
+                // Get the location where the signature should be located, attempt to
+                // load it into signature, and convert it to an ArrayBuffer.
+                let signatureLocation = signatureLocationPrefix + quote.getAttribute("signaturefile") + ".sig";
+                let signature = JSON.parse(await loadFile(signatureLocation));
+
+                let verify = await verifySignature(quote, signature).catch((error) => {
+                    console.warn('Problem verifying signature!\nError:', error);
+                    return false;
+                });
+                if (verify) {
+                    quote.classList.add("verified-quote");
+                    addModalityFunction(quote, "modal-btn-verified", true, signature);
+                } else {
+                    quote.classList.add("rejected-quote");
+                    addModalityFunction(quote, "modal-btn-rejected", false, signature);
+                }
+            } catch (error) {
+                console.warn('Problem loading signature!\nError:', error);
             }
         }
     }
@@ -316,7 +324,7 @@
      * reference, if any is found verify it accordingly.
      */
     async function verifySignedText() {
-        let text = findSignedText(document.body.innerHTML,"START_Q","END_Q");
+        let text = verifySignedTextHelper(document.body.innerHTML, "START_Q", "END_Q");
         document.body.innerHTML = text;
     }
 
