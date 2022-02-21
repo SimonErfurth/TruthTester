@@ -44,6 +44,15 @@
         element.remove();
     }
 
+    /**
+     * Replace special symbols with entities
+     */
+    function escapeHTML(html) {
+        let escape = document.createElement('textarea');
+        escape.textContent = html;
+        return escape.innerHTML;
+    }
+
     /////////////////////
     // MODAL FUNCTIONS //
     /////////////////////
@@ -60,7 +69,7 @@
             header = "The authenticity of this quote has been verified";
         }
         let additionalInformation = signature.comment;
-        console.log("element.textContent = ", element.textContent);
+        let content = escapeHTML(element.innerHTML);
         return `<div id="AuthenticModal" class="authenticity-modal">
 
     <!-- Modal content -->
@@ -77,9 +86,9 @@
           <dt><b>Signature Algorithm</b></dt> <dd>${algoParams}</dd>
         </dl>
         <h4> The signed quote is: </h4>
-        <div style="padding: 5px; border: 2px solid black;"><p>
-           ${element.textContent}
-        </p></div>
+        <div style="padding: 5px; border: 2px solid black;"><p><code>
+           ${content}
+        </code></p></div>
       </div>
       <div class="authenticity-modal-footer">
         <h4>Learn more about AuthenticityAuthenticator and why you should prefer content that has been verified by it at <a href="https://github.com/SimonErfurth/TruthTester">AuthenticityAuthenticator's website</a>.</h4>

@@ -3,7 +3,6 @@ import * as fs from 'fs';
 const argv = process.argv;
 const KEY_NAME = argv[2];
 const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: {name: "SHA-256"}, };
-// const KEY_PARAM = { name: 'NODE-ED25519', namedCurve: 'NODE-ED25519' };
 
 (async function() {
     /**
