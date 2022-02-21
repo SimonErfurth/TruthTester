@@ -1,7 +1,7 @@
 (function() {
     const relativeSignaturePath = "signatures/";
     const TEXT_ID_OFFSET = 1;  // Offset between end of string indicating end of a quote and start of the ID string
-    const TEXT_ID_LENGTH = 6; 
+    const TEXT_ID_LENGTH = 6;
 
     /**
      * Check and set a global guard variable.
@@ -261,27 +261,38 @@
     ////////////////////////
 
     /**
+     * Check if the text part of 'element' contains 'string'
+     */
+    function containsString(element, string) {
+        return element.textContent.includes(string);
+    }
+
+    /**
      * Go over `text`, return positions of matching `startString` and `endString`
      */
     function verifySignedTextHelper(text, startString, endString) {
-        // let line = 1;
-        // let char = 1;
-        // let stack = [];
-        // for (let i = 0; i < text.length - endString.length; i ++) {
-        //     if (text.slice(i,i+startString.length) == startString) {
-        //         console.log("Found a startstring!");
-        //         stack.push(i);
-        //     }
-        //     if (text.slice(i,i+endString.length) == endString && stack != []) {
-        //         console.log("Found a quote, starting at char ", stack.pop(), " and ending at char ",i + endString.length);
-        //     }
-        // }
-        let startID = text.indexOf(endString) + endString.length + TEXT_ID_OFFSET;
-        let textID = text.slice(startID, startID + TEXT_ID_LENGTH);
-        let startTag = `<span class="signedText", signatureFile="${textID}">`;
-        text = text.replace(new RegExp(startString, 'g'), startTag);
-        text = text.replace(new RegExp(endString + ":" + textID + ":", 'g'), "</span>");
-        return text;
+        // Find element containing startString and endString
+        for (let a of document.querySelectorAll("*")) {
+            if (a.textContent.includes(startString) && a.textContent.includes(endString)) {
+                // Ensure this element has no sub-elements containing both strings
+                let innerMost = true;
+                for (const child of a.children) {
+                    if (containsString(child, startString) && containsString(child, endString)) {
+                        innerMost = false;
+                    }
+                }
+                if (innerMost) {
+                    let startID = a.textContent.indexOf(endString) + endString.length + TEXT_ID_OFFSET;
+                    let textID = a.textContent.slice(startID, startID + TEXT_ID_LENGTH);
+                    a.textContent = a.textContent.replace(new RegExp(startString, 'g'), "").replace(new RegExp(endString + ":" + textID + ":", 'g'), "");
+                    let wrapper = document.createElement('div');
+                    wrapper.classList.add("signedText");
+                    wrapper.setAttribute("signatureFile", textID);
+                    a.parentNode.insertBefore(wrapper, a);
+                    wrapper.appendChild(a);
+                }
+            }
+        }
     }
 
     ////////////////////
@@ -295,6 +306,7 @@
         // let modal = authenticModalSetup();
         let existingQuotes = document.querySelectorAll(className);
         for (let quote of existingQuotes) {
+            console.log("quote = ", quote);
             try {
                 // Get the location where the signature should be located, attempt to
                 // load it into signature, and convert it to an ArrayBuffer.
@@ -333,8 +345,7 @@
      * reference, if any is found verify it accordingly.
      */
     async function verifySignedText() {
-        let text = verifySignedTextHelper(document.body.innerHTML, "START_Q", "END_Q");
-        document.body.innerHTML = text;
+        verifySignedTextHelper(document.body.innerHTML, "START_Q", "END_Q");
     }
 
     /**
