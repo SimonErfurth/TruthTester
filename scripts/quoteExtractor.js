@@ -34,9 +34,10 @@ const tagToSign = argv[3];
 
     let quotes = dom.window.document.querySelectorAll(tagToSign);
     for (let quote of quotes) {
-        // Here there is a decision to be made, for now we go with innerHtml
-        let hashOfQuote = await hashOfContent(quote.innerHTML);
-        fs.writeFile(hashOfQuote, quote.innerHTML, err => {
+        // Here there is a decision to be made, for now we go with textContent
+        // let hashOfQuote = await hashOfContent(quote.textContent.replace(/\s+/g, ' ').trim());
+        // console.log("hashOfQuote = ", hashOfQuote);
+        fs.writeFile(quote.getAttribute("signatureFile") + ".quoteH", quote.textContent.replace(/\s+/g, ' ').trim(), err => {
             if (err) { console.log(err); }
         });
     }

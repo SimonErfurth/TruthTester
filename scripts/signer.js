@@ -55,6 +55,7 @@ const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: { name: "SHA-256" 
     async function writeSignatureToFile(key, publicKey, fileToSign) {
         let toSign = getContent(fileToSign);
         toSign = await hashOfContent(toSign);
+        let name = fileToSign.replace(".quoteH", "");
         // Convert to ArrayBuffer
         const encoder = new TextEncoder();
         toSign = encoder.encode(toSign);
@@ -72,7 +73,7 @@ const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: { name: "SHA-256" 
             "identity": identity,
             "comment": comment,
         };
-        fs.writeFile(fileToSign + '.sig', JSON.stringify(signatureFull, null), err => {
+        fs.writeFile(name + '.sig', JSON.stringify(signatureFull, null), err => {
             if (err) { console.log(err); }
         });
         console.log("signatureFull = ", signatureFull);

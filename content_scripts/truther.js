@@ -245,7 +245,7 @@
 
         // Get the hash of the element, and convert it into an ArryBuffer
         const encoder = new TextEncoder();
-        let hashH = await hashOfContent(element.innerHTML);
+        let hashH = await hashOfContent(element.textContent.replace(/\s+/g, ' ').trim());
         hashH = encoder.encode(hashH).buffer;
         let verification = await crypto.subtle.verify(
             signatureFull.KEY_PARAM,
@@ -281,15 +281,20 @@
                         innerMost = false;
                     }
                 }
+                // Once we have the inner most element we do text replacement in
+                // it, to get the correct tags in there. One current weakness is
+                // that this destroys any events attached to the found element,
+                // but this is deemed okay; most likely this is a <p> tag or
+                // something similar.
                 if (innerMost) {
-                    let startID = a.textContent.indexOf(endString) + endString.length + TEXT_ID_OFFSET;
-                    let textID = a.textContent.slice(startID, startID + TEXT_ID_LENGTH);
-                    a.textContent = a.textContent.replace(new RegExp(startString, 'g'), "").replace(new RegExp(endString + ":" + textID + ":", 'g'), "");
-                    let wrapper = document.createElement('div');
-                    wrapper.classList.add("signedText");
-                    wrapper.setAttribute("signatureFile", textID);
-                    a.parentNode.insertBefore(wrapper, a);
-                    wrapper.appendChild(a);
+                    let startID = a.innerHTML.indexOf(endString) + endString.length + TEXT_ID_OFFSET;
+                    let textID = a.innerHTML.slice(startID, startID + TEXT_ID_LENGTH);
+                    a.innerHTML = a.innerHTML.replace(new RegExp(startString, 'g'), `<span class="signedText" signatureFile=${textID}>`).replace(new RegExp(endString + ":" + textID + ":", 'g'), "</span>");
+                    // let wrapper = document.createElement('div');
+                    // wrapper.classList.add("signedText");
+                    // wrapper.setAttribute("signatureFile", textID);
+                    // a.parentNode.insertBefore(wrapper, a);
+                    // wrapper.appendChild(a);
                 }
             }
         }
@@ -306,11 +311,10 @@
         // let modal = authenticModalSetup();
         let existingQuotes = document.querySelectorAll(className);
         for (let quote of existingQuotes) {
-            console.log("quote = ", quote);
             try {
                 // Get the location where the signature should be located, attempt to
                 // load it into signature, and convert it to an ArrayBuffer.
-                let signatureLocation = signatureLocationPrefix + quote.getAttribute("signaturefile") + ".sig";
+                let signatureLocation = signatureLocationPrefix + quote.getAttribute("signatureFile") + ".sig";
                 let signature = JSON.parse(await loadFile(signatureLocation));
 
                 let verify = await verifySignature(quote, signature).catch((error) => {
@@ -346,6 +350,7 @@
      */
     async function verifySignedText() {
         verifySignedTextHelper(document.body.innerHTML, "START_Q", "END_Q");
+        verifySignedElements(".signedText", "https://serfurth.dk/RealFakeNews/sigs/");
     }
 
     /**
@@ -360,7 +365,6 @@
             verifySignedElements(".signedQuote", window.location.href + relativeSignaturePath);
         } else if (message.command === "verifyText") {
             verifySignedText();
-            verifySignedElements(".signedText", "https://serfurth.dk/RealFakeNews/sigs/");
         }
     });
 
