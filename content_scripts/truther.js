@@ -1,7 +1,9 @@
 (function() {
     const relativeSignaturePath = "signatures/";
-    const TEXT_ID_OFFSET = 1;  // Offset between end of string indicating end of a quote and start of the ID string
+    const TEXT_ID_OFFSET = 1;  // Offset between QUOTE_END_STRING and start of the ID string
     const TEXT_ID_LENGTH = 6;
+    const QUOTE_START_STRING = "START_Q";
+    const QUOTE_END_STRING = "END_Q";
 
     /**
      * Check and set a global guard variable.
@@ -70,6 +72,7 @@
         }
         let additionalInformation = signature.comment;
         let content = escapeHTML(element.innerHTML);
+        let toCopy = QUOTE_START_STRING + " " + element.textContent.replace(/\s+/g, ' ').trim() + QUOTE_END_STRING + ":" + element.getAttribute("signaturefile");
         return `<div id="AuthenticModal" class="authenticity-modal">
 
     <!-- Modal content -->
@@ -79,6 +82,7 @@
         <h2>${header}</h2>
       </div>
       <div class="authenticity-modal-body">
+<div class="authenticity-modal-info-column">
         <dl>
           <dt><b>Signer</b></dt> <dd>${signer}</dd>
           <dt><b>Date of signing</b></dt> <dd>${dateOfSigning}</dd>
@@ -89,12 +93,16 @@
         <div style="padding: 5px; border: 2px solid black;"><p><code>
            ${content}
         </code></p></div>
+</div>
+      <div class="authenticity-modal-copy-column">
+        <p><textarea id="modal-copyBox">${toCopy}</textarea></p>
+<p><button id="button-modal-copyBox">Copy verified quote</button></p>
+      </div>
       </div>
       <div class="authenticity-modal-footer">
         <h4>Learn more about AuthenticityAuthenticator and why you should prefer content that has been verified by it at <a href="https://github.com/SimonErfurth/TruthTester">AuthenticityAuthenticator's website</a>.</h4>
       </div>
     </div>
-
   </div>`;
     }
 
@@ -142,6 +150,40 @@
   font-weight: bold;
 }
 
+/* Create two equal columns that floats next to each other */
+/* Left column */
+.authenticity-modal-info-column {
+    float: left;
+    width: 48%;
+}
+
+/* Right column */
+.authenticity-modal-copy-column {
+    float: right;
+    width: 48%;
+    padding-left: 20px;
+}
+
+/* Clear floats after the body */
+.authenticity-modal-body:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* Responsive layout columns - when the screen is less than 800px wide, make the two columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 800px) {
+    .authenticity-modal-info-column, .authenticity-modal-copy-column {
+        width: 100%;
+        padding: 0;
+    }
+}
+
+#modal-copyBox {
+    width:100%;
+    height:200px;
+}
+
 .authenticity-close:hover,
 .authenticity-close:focus {
   color: #000;
@@ -171,6 +213,14 @@
     function authenticModalSetup(modalCSS, modalHTML) {
         addCss(modalCSS);
         document.body.insertAdjacentHTML("beforeend", modalHTML);
+        // Function for copying the quote with its ID etc.
+        let copyButton = document.getElementById("button-modal-copyBox");
+        let copyText = document.getElementById("modal-copyBox");
+        copyButton.addEventListener('click', function() {
+            copyText.select();
+            navigator.clipboard.writeText(copyText.textContent);
+        });
+        
         let modal = document.getElementById("AuthenticModal");
         window.addEventListener('click', function(event) {
             if (event.target == modal) {
@@ -349,7 +399,7 @@
      * reference, if any is found verify it accordingly.
      */
     async function verifySignedText() {
-        verifySignedTextHelper(document.body.innerHTML, "START_Q", "END_Q");
+        verifySignedTextHelper(document.body.innerHTML, QUOTE_START_STRING, QUOTE_END_STRING);
         verifySignedElements(".signedText", "https://serfurth.dk/RealFakeNews/sigs/");
     }
 
