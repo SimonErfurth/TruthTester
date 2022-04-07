@@ -72,7 +72,7 @@
         }
         let additionalInformation = signature.comment;
         let content = escapeHTML(element.innerHTML);
-        let toCopy = QUOTE_START_STRING + " " + element.textContent.replace(/\s+/g, ' ').trim() + QUOTE_END_STRING + ":" + element.getAttribute("signaturefile");
+        let toCopy = QUOTE_START_STRING + " " + element.textContent.replace(/\s+/g, ' ').trim() + QUOTE_END_STRING + ":" + element.getAttribute("signaturefile").slice(0,6) + ":";
         return `<div id="AuthenticModal" class="authenticity-modal">
 
     <!-- Modal content -->
@@ -320,7 +320,7 @@
     /**
      * Go over `text`, return positions of matching `startString` and `endString`
      */
-    function verifySignedTextHelper(text, startString, endString) {
+    async function verifySignedTextHelper(text, startString, endString) {
         // Find element containing startString and endString
         for (let a of document.querySelectorAll("*")) {
             if (a.textContent.includes(startString) && a.textContent.includes(endString)) {
@@ -337,9 +337,14 @@
                 // but this is deemed okay; most likely this is a <p> tag or
                 // something similar.
                 if (innerMost) {
+                    // Wrap relevant part in span
                     let startID = a.innerHTML.indexOf(endString) + endString.length + TEXT_ID_OFFSET;
                     let textID = a.innerHTML.slice(startID, startID + TEXT_ID_LENGTH);
-                    a.innerHTML = a.innerHTML.replace(new RegExp(startString, 'g'), `<span class="signedText" signatureFile=${textID}>`).replace(new RegExp(endString + ":" + textID + ":", 'g'), "</span>");
+                    a.innerHTML = a.innerHTML.replace(new RegExp(startString, 'g'), `<span class="signedText">`).replace(new RegExp(endString + ":" + textID + ":", 'g'), "</span>");
+                    // And add name of signature as a property.
+                    let element = a.querySelector(".signedText");
+                    let hashOf = await hashOfContent(element.textContent.replace(/\s+/g, ' ').trim());
+                    element.setAttribute("signatureFile", textID + "---" + hashOf);
                     // let wrapper = document.createElement('div');
                     // wrapper.classList.add("signedText");
                     // wrapper.setAttribute("signatureFile", textID);
@@ -400,7 +405,7 @@
      * reference, if any is found verify it accordingly.
      */
     async function verifySignedText() {
-        verifySignedTextHelper(document.body.innerHTML, QUOTE_START_STRING, QUOTE_END_STRING);
+        await verifySignedTextHelper(document.body.innerHTML, QUOTE_START_STRING, QUOTE_END_STRING);
         verifySignedElements(".signedText", "https://serfurth.dk/RealFakeNews/sigs/");
     }
 
@@ -418,5 +423,4 @@
             verifySignedText();
         }
     });
-
 })();
