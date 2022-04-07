@@ -9,6 +9,7 @@ for f in *.quoteH; do
 done
 
 for f in *.sig; do
+    cp $f ~/serfurth.dk/RealFakeNews/sigs/$f
     mv $f ./../../testWebsite/signatures/$f
 done
 
