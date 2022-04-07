@@ -8,7 +8,7 @@ const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: {name: "SHA-256"},
     /**
      * Generates a public/private key pair
      */
-    async function generateEd25519Key() {
+    async function generateNewKeys() {
         return webcrypto.subtle.generateKey(
             KEY_PARAM,
             true,
@@ -27,7 +27,7 @@ const KEY_PARAM = { name: "ECDSA", namedCurve: "P-384", hash: {name: "SHA-256"},
             }
         });
     }
-    let keys = await generateEd25519Key();
+    let keys = await generateNewKeys();
     writeKeyToFile(keys.privateKey, KEY_NAME + 'PrivateKey.key');
     writeKeyToFile(keys.publicKey, KEY_NAME + 'PublicKey.key');
 })();

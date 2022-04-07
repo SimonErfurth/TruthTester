@@ -379,6 +379,7 @@
                     addModalityFunction(quote, "modal-btn-rejected", false, signature);
                 }
             } catch (error) {
+                quote.classList.add("rejected-quote");
                 console.warn('Problem loading signature!\nError:', error);
             }
         }

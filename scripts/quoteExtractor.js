@@ -1,4 +1,4 @@
-import { webcrypto } from 'crypto';
+import { webcrypto, randomBytes } from 'crypto';
 import { TextEncoder } from 'util';
 import * as fs from 'fs';
 import { JSDOM } from 'jsdom';
@@ -37,9 +37,13 @@ const tagToSign = argv[3];
         // Here there is a decision to be made, for now we go with textContent
         // let hashOfQuote = await hashOfContent(quote.textContent.replace(/\s+/g, ' ').trim());
         // console.log("hashOfQuote = ", hashOfQuote);
-        fs.writeFile(quote.getAttribute("signatureFile") + ".quoteH", quote.textContent.replace(/\s+/g, ' ').trim(), err => {
+        let ID = randomBytes(6).toString('base64url').slice(0,6) + "---" + await hashOfContent(quote.textContent.replace(/\s+/g, ' ').trim());
+        fs.writeFile(ID + ".quoteH", quote.textContent.replace(/\s+/g, ' ').trim(), err => {
             if (err) { console.log(err); }
         });
+        quote.setAttribute("signatureFile",ID);
     }
-    
+    fs.writeFile(HTMLFile,dom.window.document.documentElement.outerHTML, err => {
+        if (err) { console.log(err); }
+    });
 })();
