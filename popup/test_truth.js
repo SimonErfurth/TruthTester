@@ -1,8 +1,8 @@
 /**
  * CSS to insert green boxes around `div.dre-block-quote` elements
  */
-const truetherPage = `.verified-quote { background-color: lightgreen; }      
-.rejected-quote { background-color: red; }`;
+const truetherPage = `.verified-quote { background-color: #BBFFBB; }      
+.rejected-quote { background-color: #FFBBBB; }`;
 
 /**
  * Listen for clicks on the buttons, and inserts/removes the appropriate CSS code

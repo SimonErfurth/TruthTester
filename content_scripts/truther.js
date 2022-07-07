@@ -16,10 +16,10 @@
     window.hasRun = true;
 
     /**
-     * Load file from server.
+     * Retrieve file from `URL`.
      */
-    async function loadFile(filePath) {
-        let response = await fetch(filePath, { cache: "no-cache" });
+    async function loadFile(URL) {
+        let response = await fetch(URL, { cache: "no-cache" });
         if (response.status !== 200) {
             throw response.status;
         }
@@ -27,19 +27,19 @@
     }
 
     /**
-     * Inject `css` into the headder of the window
+     * Inject `css` into the header of the window
      */
     function addCss(css) {
         var head = document.getElementsByTagName('head')[0];
         var s = document.createElement('style');
         s.setAttribute('type', 'text/css');
-        s.setAttribute('id', 'AuthenticModalCSS');
+        s.setAttribute('id', 'AuthenticModalCSS'); // TODO allow choosing ID
         s.appendChild(document.createTextNode(css));
         head.appendChild(s);
     }
 
     /**
-     * Removes element with id `idString` from the webpage
+     * Removes element with id `idString` from the web page
      */
     function elementRemove(idString) {
         let element = document.getElementById(idString);
@@ -47,7 +47,8 @@
     }
 
     /**
-     * Replace special symbols with entities
+     * Replace special symbols with entities.
+     * Special symbols are in this case things that might have special HTML meaning, i.e. < and >.
      */
     function escapeHTML(html) {
         let escape = document.createElement('textarea');
@@ -65,7 +66,7 @@
     function modalHelperHTML(element, verified, signature) {
         let algoParams = signature.KEY_PARAM.name;
         let signer = signature.identity;
-        let dateOfSigning = "30/02 2021";
+        let dateOfSigning = "30/02 2021"; // Todo - include in signature 
         let header = "Authenticity verification failed, proceed with caution!";
         if (verified) {
             header = "The authenticity of this quote has been verified";
@@ -238,8 +239,8 @@
     }
 
     /**
-     * Function st. when clicking a authenticated (respectfully rejected)
-     * element it injects and opens a modality
+     * Function st. when clicking a authenticated (or rejected) element it
+     * injects and opens a modality
      */
     function addModalityFunction(element, classString, verified, signature) {
         let wrapper = document.createElement('span');
@@ -255,18 +256,18 @@
     // FUNCTIONS RELATED TO CRYPTOGRAPHY //
     ///////////////////////////////////////
     /**
-     * Calculates and return the hash of `element`
+     * Calculates and returns the hash of `textValue` in hex.
      */
-    async function hashOfContent(element) {
+    async function hashOfContent(textValue) {
         const encoder = new TextEncoder();
-        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(element));
+        const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(textValue));
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         return hashHex;
     }
 
     /**
-     * Retrieves key from keyFile attribute of `element`. Returns a `CryptoKey` object
+     * Loads key described in `keyString` with the given parameters. Returns a `CryptoKey` object
      */
     async function loadKey(keyString, KEY_PARAM) {
         let KeyJWK = JSON.parse(keyString);
@@ -306,6 +307,10 @@
         return verification;
     }
 
+    /////////
+    // PKI //
+    /////////
+    
     ////////////////////////
     // FUNCTIONS FOR TEXT //
     ////////////////////////
@@ -318,7 +323,8 @@
     }
 
     /**
-     * Go over `text`, return positions of matching `startString` and `endString`
+     * Go over the document, finding the inner-most element containing both
+     * `startString` and `endString`, and tries to verify it.
      */
     async function verifySignedTextHelper(text, startString, endString) {
         // Find element containing startString and endString
@@ -363,7 +369,6 @@
      * authentic, and treat it accordingly.
      */
     async function verifySignedElements(className, signatureLocationPrefix) {
-        // let modal = authenticModalSetup();
         let existingQuotes = document.querySelectorAll(className);
         for (let quote of existingQuotes) {
             try {
@@ -388,6 +393,8 @@
                 console.warn('Problem loading signature!\nError:', error);
             }
         }
+        // Here one could check that at least one verification succeeded, and
+        // warn that it might be a connection issue, if not.
     }
 
     /**
